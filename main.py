@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from cli import get_args
 from utils import get_data
 from trainer import Trainer
-from model import EF_LSTM
+from models import EF_LSTM, LF_LSTM, EF_LF_LSTM
 
 if __name__ == "__main__":
     args = get_args()
@@ -16,8 +16,8 @@ if __name__ == "__main__":
     np.random.seed(seed)
 
     # Set device
-    os.environ["CUDA_VISIBLE_DEVICES"] = args['cuda']
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    # os.environ["CUDA_VISIBLE_DEVICES"] = args['cuda']
+    device = torch.device(f"cuda:{args['cuda']}" if torch.cuda.is_available() else 'cpu')
 
     print("Start loading the data....")
 
@@ -47,7 +47,17 @@ if __name__ == "__main__":
         'mosei_senti': torch.nn.L1Loss
     }
 
-    model = EF_LSTM(
+    model_type = args['model'].lower()
+    if model_type == 'lf':
+        MODEL = LF_LSTM
+    elif model_type == 'ef':
+        MODEL = EF_LSTM
+    elif model_type == 'eflf':
+        MODEL = EF_LF_LSTM
+    else:
+        raise ValueError('Wrong model!')
+
+    model = MODEL(
         num_classes=num_classes[args['dataset']],
         input_sizes=input_sizes[args['dataset']],
         hidden_size=args['hidden_size'],
@@ -56,6 +66,8 @@ if __name__ == "__main__":
         bidirectional=args['bidirectional']
     )
     model = model.to(device=device)
+
+    print(model)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
 

@@ -10,7 +10,7 @@ def get_args():
     parser.add_argument('-ep', '--epochs', help='Number of epochs', type=int, required=True)
     parser.add_argument('-es', '--early-stop', help='Early stop', type=int, required=False, default=4)
     parser.add_argument('-cu', '--cuda', help='Cude device number', type=str, required=False, default='0')
-    parser.add_argument('-mo', '--model', help='Which model to use', type=str, required=False)
+    parser.add_argument('-mo', '--model', help='lf/ef', type=str, required=False, default='lf')
     parser.add_argument('-cl', '--clip', help='Use clip to gradients', action='store_true')
     parser.add_argument('-sc', '--scheduler', help='Use scheduler to optimizer', action='store_true')
     parser.add_argument('-se', '--seed', help='Random seed', type=int, required=False, default=0)
