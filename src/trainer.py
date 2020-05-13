@@ -3,17 +3,18 @@ import copy
 import torch
 from tqdm import tqdm
 from tabulate import tabulate
-from evaluate import eval_mosei_senti
-from utils import save
+from src.evaluate import eval_mosei_senti
+from src.utils import save
 
 class Trainer():
-    def __init__(self, args, model, criterion, optimizer, device, dataloaders):
+    def __init__(self, args, model, criterion, optimizer, scheduler, device, dataloaders):
         self.args = args
         self.model = model
         self.device = device
         self.criterion = criterion
         self.optimizer = optimizer
         self.dataloaders = dataloaders
+        self.scheduler = scheduler
         self.earlyStop = args['early_stop']
 
         self.all_train_stats = []
@@ -109,6 +110,8 @@ class Trainer():
                 loss = self.criterion(logits, Y)
                 loss.backward()
                 epoch_loss += loss.item() * Y.size(0)
+                if self.args['clip'] > 0:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args['clip'])
                 self.optimizer.step()
             total_logits = torch.cat((total_logits, logits), dim=0) if total_logits is not None else logits
             total_Y = torch.cat((total_Y, Y), dim=0) if total_Y is not None else Y
@@ -138,6 +141,10 @@ class Trainer():
             total_Y = torch.cat((total_Y, Y), dim=0) if total_Y is not None else Y
 
         epoch_loss /= len(dataloader.dataset)
+
+        if phase == 'valid':
+            self.scheduler.step(epoch_loss)
+
         print(f'{phase} loss = {epoch_loss}')
         # mae, acc2, acc5, acc7, f1, corr = eval_mosei_senti(logits, Y)
         return eval_mosei_senti(total_logits, total_Y)
@@ -153,12 +160,12 @@ class Trainer():
 
         save(stats, os.path.join(
             self.saving_path,
-            f'{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt'
+            f"{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt"
         ))
 
     def save_model(self):
         save(copy.deepcopy(self.model.state_dict()), os.path.join(
             self.saving_path,
-            f'{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt'
+            f"{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt"
         ))
 

@@ -1,6 +1,6 @@
 import torch
 import os
-from dataset import Multimodal_Datasets
+from src.dataset import Multimodal_Datasets
 
 
 def get_data(args, split='train'):

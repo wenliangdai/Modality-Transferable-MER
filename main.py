@@ -2,10 +2,12 @@ import os
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
-from cli import get_args
-from utils import get_data
-from trainer import Trainer
-from models import EF_LSTM, LF_LSTM, EF_LF_LSTM
+from src.cli import get_args
+from src.utils import get_data
+from src.trainer import Trainer
+from src.models import baselines # EF_LSTM, LF_LSTM, EF_LF_LSTM
+from src.models.mult import MULTModel
+from src.config import NUM_CLASSES, CRITERIONS, MULT_PARAMS
 
 if __name__ == "__main__":
     args = get_args()
@@ -35,39 +37,39 @@ if __name__ == "__main__":
         'test': test_loader
     }
 
-    num_classes = {
-        'mosei_senti': 1,
-    }
-
-    input_sizes = {
-        'mosei_senti': [300, 74, 35],
-    }
-
-    criterions = {
-        'mosei_senti': torch.nn.L1Loss
-    }
+    modal_dims = list(train_data.get_dim())
 
     model_type = args['model'].lower()
-    if model_type == 'lf':
-        MODEL = LF_LSTM
-    elif model_type == 'ef':
-        MODEL = EF_LSTM
-    elif model_type == 'eflf':
-        MODEL = EF_LF_LSTM
-    else:
-        raise ValueError('Wrong model!')
 
-    model = MODEL(
-        num_classes=num_classes[args['dataset']],
-        input_sizes=input_sizes[args['dataset']],
-        hidden_size=args['hidden_size'],
-        num_layers=args['num_layers'],
-        dropout=args['dropout'],
-        bidirectional=args['bidirectional']
-    )
+    if model_type == 'mult':
+        mult_params = MULT_PARAMS[args['dataset']]
+        mult_params['orig_d_l'] = modal_dims[0]
+        mult_params['orig_d_a'] = modal_dims[1]
+        mult_params['orig_d_v'] = modal_dims[2]
+        model = MULTModel(mult_params)
+    else:
+        if model_type == 'lf':
+            MODEL = baselines.LF_LSTM
+        elif model_type == 'ef':
+            MODEL = baselines.EF_LSTM
+        elif model_type == 'eflf':
+            MODEL = baselines.EF_LF_LSTM
+        else:
+            raise ValueError('Wrong model!')
+
+        model = MODEL(
+            num_classes=NUM_CLASSES[args['dataset']],
+            input_sizes=modal_dims,
+            hidden_size=args['hidden_size'],
+            num_layers=args['num_layers'],
+            dropout=args['dropout'],
+            bidirectional=args['bidirectional']
+        )
     model = model.to(device=device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
 
-    trainer = Trainer(args, model, criterions['mosei_senti'](), optimizer, device, dataloaders)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=args['patience'], verbose=True)
+
+    trainer = Trainer(args, model, CRITERIONS[args['dataset']](), optimizer, scheduler, device, dataloaders)
     trainer.train()

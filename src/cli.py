@@ -6,14 +6,15 @@ def get_args():
     # Training hyper-parameters
     parser.add_argument('-bs', '--batch-size', help='Batch size', type=int, required=True)
     parser.add_argument('-lr', '--learning-rate', help='Learning rate', type=float, required=True)
-    parser.add_argument('-wd', '--weight-decay', help='Weight decay', type=float, required=False, default=0)
+    parser.add_argument('-wd', '--weight-decay', help='Weight decay', type=float, required=False, default=0.0)
     parser.add_argument('-ep', '--epochs', help='Number of epochs', type=int, required=True)
     parser.add_argument('-es', '--early-stop', help='Early stop', type=int, required=False, default=4)
     parser.add_argument('-cu', '--cuda', help='Cude device number', type=str, required=False, default='0')
     parser.add_argument('-mo', '--model', help='lf/ef', type=str, required=False, default='lf')
-    parser.add_argument('-cl', '--clip', help='Use clip to gradients', action='store_true')
+    parser.add_argument('-cl', '--clip', help='Use clip to gradients', type=float, required=False, default=-1.0)
     parser.add_argument('-sc', '--scheduler', help='Use scheduler to optimizer', action='store_true')
     parser.add_argument('-se', '--seed', help='Random seed', type=int, required=False, default=0)
+    parser.add_argument('-pa', '--patience', help='Patience of the scheduler', type=int, required=False, default=10)
 
     # Dataset
     parser.add_argument('--dataset', type=str, default='mosei_senti', help='Dataset to use')
