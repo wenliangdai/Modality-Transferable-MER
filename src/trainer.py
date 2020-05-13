@@ -10,6 +10,7 @@ class Trainer():
     def __init__(self, args, model, criterion, optimizer, scheduler, device, dataloaders):
         self.args = args
         self.model = model
+        self.best_model = copy.deepcopy(model.state_dict())
         self.device = device
         self.criterion = criterion
         self.optimizer = optimizer
@@ -65,6 +66,7 @@ class Trainer():
                         if i == 3: # Acc7
                             self.earlyStop = self.args['early_stop']
                             self.best_epoch = epoch
+                            self.best_model = copy.deepcopy(self.model.state_dict())
                     elif i == 3: # Acc7
                         self.earlyStop -= 1
 
@@ -85,11 +87,15 @@ class Trainer():
                 print('Early stopping...\n')
                 break
 
-        print('Best performance:')
+        print('=== Best performance ===')
         print(tabulate([
             [f'BEST ({self.best_epoch})', *self.best_valid_stats],
             [f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1]]
         ], headers=headers))
+
+        self.save_stats()
+        self.save_model()
+        print('Results and model are saved!')
 
     def train_one_epoch(self):
         self.model.train()
@@ -115,6 +121,7 @@ class Trainer():
                 self.optimizer.step()
             total_logits = torch.cat((total_logits, logits), dim=0) if total_logits is not None else logits
             total_Y = torch.cat((total_Y, Y), dim=0) if total_Y is not None else Y
+
         epoch_loss /= len(dataloader.dataset)
         print(f'train loss = {epoch_loss}')
         # mae, acc2, acc5, acc7, f1, corr = eval_mosei_senti(logits, Y)
@@ -133,9 +140,10 @@ class Trainer():
             X_vision = X_vision.to(device=self.device)
             Y = Y.squeeze(-1).to(device=self.device)
 
-            logits = self.model(X_text, X_audio, X_vision)
-            loss = self.criterion(logits, Y)
-            epoch_loss += loss.item() * Y.size(0)
+            with torch.set_grad_enabled(False):
+                logits = self.model(X_text, X_audio, X_vision)
+                loss = self.criterion(logits, Y)
+                epoch_loss += loss.item() * Y.size(0)
 
             total_logits = torch.cat((total_logits, logits), dim=0) if total_logits is not None else logits
             total_Y = torch.cat((total_Y, Y), dim=0) if total_Y is not None else Y
@@ -164,8 +172,7 @@ class Trainer():
         ))
 
     def save_model(self):
-        save(copy.deepcopy(self.model.state_dict()), os.path.join(
+        save(self.best_model, os.path.join(
             self.saving_path,
             f"{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt"
         ))
-

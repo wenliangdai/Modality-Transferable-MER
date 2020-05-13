@@ -49,7 +49,7 @@ MULT_PARAMS = {
         'attn_mask': False,
         'output_dim': 1
     },
-    'mosei_senti': {
+    'iemocap': {
         'vonly': True,
         'aonly': True,
         'lonly': True,

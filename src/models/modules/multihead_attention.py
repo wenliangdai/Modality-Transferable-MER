@@ -105,7 +105,7 @@ class MultiheadAttention(nn.Module):
             v = torch.cat([v, v.new_zeros((v.size(0), 1) + v.size()[2:])], dim=1)
             if attn_mask is not None:
                 attn_mask = torch.cat([attn_mask, attn_mask.new_zeros(attn_mask.size(0), 1)], dim=1)
-        
+
         attn_weights = torch.bmm(q, k.transpose(1, 2))
         assert list(attn_weights.size()) == [bsz * self.num_heads, tgt_len, src_len]
 
@@ -116,7 +116,7 @@ class MultiheadAttention(nn.Module):
                 print(attn_weights.shape)
                 print(attn_mask.unsqueeze(0).shape)
                 assert False
-                
+
         attn_weights = F.softmax(attn_weights.float(), dim=-1).type_as(attn_weights)
         # attn_weights = F.relu(attn_weights)
         # attn_weights = attn_weights / torch.max(attn_weights)

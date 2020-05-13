@@ -31,6 +31,10 @@ if __name__ == "__main__":
     valid_loader = DataLoader(valid_data, batch_size=args['batch_size'], shuffle=False)
     test_loader = DataLoader(test_data, batch_size=args['batch_size'], shuffle=False)
 
+    print(f'Train samples = {len(train_loader.dataset)}')
+    print(f'Valid samples = {len(valid_loader.dataset)}')
+    print(f'Test samples = {len(test_loader.dataset)}')
+
     dataloaders = {
         'train': train_loader,
         'valid': valid_loader,
@@ -65,7 +69,11 @@ if __name__ == "__main__":
             dropout=args['dropout'],
             bidirectional=args['bidirectional']
         )
+
     model = model.to(device=device)
+
+    # print(model)
+    # exit(1)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
 
