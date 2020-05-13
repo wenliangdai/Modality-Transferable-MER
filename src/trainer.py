@@ -70,7 +70,6 @@ class Trainer():
                     elif i == 3: # Acc7
                         self.earlyStop -= 1
 
-            # For printing
             train_stats_str = self.make_stat(self.prev_train_stats, train_stats)
             valid_stats_str = self.make_stat(self.prev_valid_stats, valid_stats)
             test_stats_str = self.make_stat(self.prev_test_stats, test_stats)
@@ -81,7 +80,6 @@ class Trainer():
 
             print(tabulate([['Train', *train_stats_str], ['Valid', *valid_stats_str], ['Test', *test_stats_str]], headers=headers))
             print()
-            # End printing
 
             if self.earlyStop == 0:
                 print('Early stopping...\n')
@@ -157,6 +155,9 @@ class Trainer():
         # mae, acc2, acc5, acc7, f1, corr = eval_mosei_senti(logits, Y)
         return eval_mosei_senti(total_logits, total_Y)
 
+    def get_saving_file_name(self):
+        return f"{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt"
+
     def save_stats(self):
         stats = {
             'train_stats': self.all_train_stats,
@@ -166,13 +167,7 @@ class Trainer():
             'best_epoch': self.best_epoch
         }
 
-        save(stats, os.path.join(
-            self.saving_path,
-            f"{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt"
-        ))
+        save(stats, os.path.join(self.saving_path, 'stats', self.get_saving_file_name()))
 
     def save_model(self):
-        save(self.best_model, os.path.join(
-            self.saving_path,
-            f"{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt"
-        ))
+        save(self.best_model, os.path.join(self.saving_path, 'models', self.get_saving_file_name()))
