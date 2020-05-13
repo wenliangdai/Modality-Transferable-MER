@@ -1,7 +1,10 @@
+import os
+import copy
 import torch
 from tqdm import tqdm
-from evaluate import eval_mosei_senti
 from tabulate import tabulate
+from evaluate import eval_mosei_senti
+from utils import save
 
 class Trainer():
     def __init__(self, args, model, criterion, optimizer, device, dataloaders):
@@ -23,6 +26,8 @@ class Trainer():
 
         self.best_valid_stats = [float('inf')] + [-float('inf')] * 5
         self.best_epoch = -1
+
+        self.saving_path = './savings/stats/'
 
     def make_stat(self, prev, curr):
         new_stats = []
@@ -76,9 +81,10 @@ class Trainer():
             # End printing
 
             if self.earlyStop == 0:
-                print('Early stopping...')
+                print('Early stopping...\n')
                 break
 
+        print('Best performance:')
         print(tabulate([
             [f'BEST ({self.best_epoch})', *self.best_valid_stats],
             [f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1]]
@@ -136,6 +142,23 @@ class Trainer():
         # mae, acc2, acc5, acc7, f1, corr = eval_mosei_senti(logits, Y)
         return eval_mosei_senti(total_logits, total_Y)
 
-    def test(self):
-        pass
+    def save_stats(self):
+        stats = {
+            'train_stats': self.all_train_stats,
+            'valid_stats': self.all_valid_stats,
+            'test_stats': self.all_test_stats,
+            'best_valid_stats': self.best_valid_stats,
+            'best_epoch': self.best_epoch
+        }
+
+        save(stats, os.path.join(
+            self.saving_path,
+            f'{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt'
+        ))
+
+    def save_model(self):
+        save(copy.deepcopy(self.model.state_dict()), os.path.join(
+            self.saving_path,
+            f'{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt'
+        ))
 

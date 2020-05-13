@@ -67,8 +67,6 @@ if __name__ == "__main__":
     )
     model = model.to(device=device)
 
-    print(model)
-
     optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
 
     trainer = Trainer(args, model, criterions['mosei_senti'](), optimizer, device, dataloaders)

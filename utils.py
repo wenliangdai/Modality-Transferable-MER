@@ -17,22 +17,35 @@ def get_data(args, split='train'):
         data = torch.load(data_path)
     return data
 
+def save(toBeSaved, filename, mode='wb'):
+    dirname = os.path.dirname(filename)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+    file = open(filename, mode)
+    pickle.dump(toBeSaved, file, protocol=4)
+    file.close()
 
-def save_load_name(args, name=''):
-    if args.aligned:
-        name = name if len(name) > 0 else 'aligned_model'
-    elif not args.aligned:
-        name = name if len(name) > 0 else 'nonaligned_model'
+def load(filename, mode='rb'):
+    file = open(filename, mode)
+    loaded = pickle.load(file)
+    file.close()
+    return loaded
 
-    return name + '_' + args.model
+# def save_load_name(args, name=''):
+#     if args.aligned:
+#         name = name if len(name) > 0 else 'aligned_model'
+#     elif not args.aligned:
+#         name = name if len(name) > 0 else 'nonaligned_model'
+
+#     return name + '_' + args.model
 
 
-def save_model(args, model, name=''):
-    name = save_load_name(args, name)
-    torch.save(model, f'pre_trained_models/{name}.pt')
+# def save_model(args, model, name=''):
+#     name = save_load_name(args, name)
+#     torch.save(model, f'pre_trained_models/{name}.pt')
 
 
-def load_model(args, name=''):
-    name = save_load_name(args, name)
-    model = torch.load(f'pre_trained_models/{name}.pt')
-    return model
+# def load_model(args, name=''):
+#     name = save_load_name(args, name)
+#     model = torch.load(f'pre_trained_models/{name}.pt')
+#     return model
