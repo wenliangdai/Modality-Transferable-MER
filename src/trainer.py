@@ -29,7 +29,7 @@ class Trainer():
         self.best_valid_stats = [float('inf')] + [-float('inf')] * 5
         self.best_epoch = -1
 
-        self.saving_path = './savings/stats/'
+        self.saving_path = './savings'
 
     def make_stat(self, prev, curr):
         new_stats = []
@@ -122,8 +122,8 @@ class Trainer():
 
         epoch_loss /= len(dataloader.dataset)
         print(f'train loss = {epoch_loss}')
-        # mae, acc2, acc5, acc7, f1, corr = eval_mosei_senti(logits, Y)
-        return eval_mosei_senti(total_logits, total_Y)
+        # mae, acc2, acc5, acc7, f1, corr = eval_mosei_senti(logits, Y, exclude_zero=self.args['exclude_zero'])
+        return eval_mosei_senti(total_logits, total_Y, exclude_zero=self.args['exclude_zero'])
 
     def eval_one_epoch(self, phase='valid'):
         self.model.eval()
@@ -152,8 +152,8 @@ class Trainer():
             self.scheduler.step(epoch_loss)
 
         print(f'{phase} loss = {epoch_loss}')
-        # mae, acc2, acc5, acc7, f1, corr = eval_mosei_senti(logits, Y)
-        return eval_mosei_senti(total_logits, total_Y)
+        # mae, acc2, acc5, acc7, f1, corr = eval_mosei_senti(logits, Y, exclude_zero=self.args['exclude_zero'])
+        return eval_mosei_senti(total_logits, total_Y, exclude_zero=self.args['exclude_zero'])
 
     def get_saving_file_name(self):
         return f"{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt"
