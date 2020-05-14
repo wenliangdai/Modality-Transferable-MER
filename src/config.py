@@ -21,7 +21,7 @@ MULT_PARAMS = {
         'vonly': True,
         'aonly': True,
         'lonly': True,
-        'num_heads': 10,
+        'num_heads': 8,
         'layers': 4,
         'attn_dropout': 0.2,
         'res_dropout': 0.1,

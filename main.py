@@ -50,6 +50,7 @@ if __name__ == "__main__":
         mult_params['orig_d_l'] = modal_dims[0]
         mult_params['orig_d_a'] = modal_dims[1]
         mult_params['orig_d_v'] = modal_dims[2]
+        mult_params['hidden_dim'] = args['hidden_dim']
         model = MULTModel(mult_params)
     else:
         if model_type == 'lf':

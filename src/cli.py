@@ -15,6 +15,7 @@ def get_args():
     parser.add_argument('-sc', '--scheduler', help='Use scheduler to optimizer', action='store_true')
     parser.add_argument('-se', '--seed', help='Random seed', type=int, required=False, default=0)
     parser.add_argument('-pa', '--patience', help='Patience of the scheduler', type=int, required=False, default=10)
+    parser.add_argument('-ez', '--exclude-zero', help='Exclude zero in evaluation', action='store_true')
 
     # Dataset
     parser.add_argument('--dataset', type=str, default='mosei_senti', help='Dataset to use')
@@ -28,6 +29,9 @@ def get_args():
     parser.add_argument('-nl', '--num-layers', help='num of layers of LSTM', type=int, required=False, default=1)
     parser.add_argument('-hs', '--hidden-size', help='hidden vector size of LSTM', type=int, required=False, default=300)
     parser.add_argument('-bi', '--bidirectional', help='Use Bi-LSTM', action='store_true')
+
+    # TRANSFORMER
+    parser.add_argument('--hidden-dim', help='Transformers Hidden Unit Size', type=int, required=False, default=40)
 
     args = vars(parser.parse_args())
     return args
