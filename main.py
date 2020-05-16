@@ -12,6 +12,17 @@ from src.config import NUM_CLASSES, CRITERIONS, MULT_PARAMS
 if __name__ == "__main__":
     args = get_args()
 
+    # Hijack Python's print function
+    # if args['log_file'] != '':
+    #     dirname = os.path.dirname(args['log_file'])
+    #     if not os.path.exists(dirname):
+    #         os.makedirs(dirname)
+    #     __print = print
+    #     __f = open(args['log_file'], 'a')
+    #     def print(*args):
+    #         __print(*args)
+    #         __print(*args, file=__f)
+
     # Fix seed for reproducibility
     seed = args['seed']
     torch.manual_seed(seed)

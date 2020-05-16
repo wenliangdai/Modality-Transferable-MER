@@ -3,6 +3,8 @@ import argparse
 def get_args():
     parser = argparse.ArgumentParser(description='Test')
 
+    parser.add_argument('-lf', '--log-file', help='Log file', type=str, required=False, default='')
+
     # Training hyper-parameters
     parser.add_argument('-bs', '--batch-size', help='Batch size', type=int, required=True)
     parser.add_argument('-lr', '--learning-rate', help='Learning rate', type=float, required=True)
