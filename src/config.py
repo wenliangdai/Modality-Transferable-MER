@@ -30,23 +30,23 @@ MULT_PARAMS = {
         'embed_dropout': 0.2,
         'attn_dropout_a': 0.0,
         'attn_dropout_v': 0.0,
-        'attn_mask': False,
+        'attn_mask': True,
         'output_dim': 1
     },
     'mosi': {
         'vonly': True,
         'aonly': True,
         'lonly': True,
-        'num_heads': 8,
+        'num_heads': 10,
         'layers': 4,
-        'attn_dropout': 0.1,
+        'attn_dropout': 0.2,
         'res_dropout': 0.1,
         'relu_dropout': 0.1,
         'out_dropout': 0.1,
-        'embed_dropout': 0.3,
+        'embed_dropout': 0.2,
         'attn_dropout_a': 0.0,
         'attn_dropout_v': 0.0,
-        'attn_mask': False,
+        'attn_mask': True,
         'output_dim': 1
     },
     'iemocap': {

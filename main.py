@@ -79,6 +79,7 @@ if __name__ == "__main__":
             num_classes=NUM_CLASSES[args['dataset']],
             input_sizes=modal_dims,
             hidden_size=args['hidden_size'],
+            hidden_sizes=args['hidden_sizes'],
             num_layers=args['num_layers'],
             dropout=args['dropout'],
             bidirectional=args['bidirectional']
@@ -103,5 +104,12 @@ if __name__ == "__main__":
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=args['patience'], verbose=True)
 
-    trainer = Trainer(args, model, CRITERIONS[args['dataset']](), optimizer, scheduler, device, dataloaders)
+    if args['loss'] == 'l1':
+        criterion = torch.nn.L1Loss()
+    elif args['loss'] == 'mse':
+        criterion = torch.nn.MSELoss()
+    elif args['loss'] == 'ce':
+        criterion = torch.nn.CrossEntropyLoss()
+
+    trainer = Trainer(args, model, criterion, optimizer, scheduler, device, dataloaders)
     trainer.train()

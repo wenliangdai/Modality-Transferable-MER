@@ -15,7 +15,11 @@ import torch
 # datasets, small modifications may be needed (depending on the type of the data, etc.)
 ############################################################################################
 
-
+'''
+MOSEI - senti
+MOSI
+IEMOCAP
+'''
 class Multimodal_Datasets(Dataset):
     def __init__(self, dataset_path, data='mosei_senti', split_type='train', if_align=False):
         super(Multimodal_Datasets, self).__init__()
@@ -62,4 +66,17 @@ class Multimodal_Datasets(Dataset):
         if self.data == 'iemocap':
             Y = torch.argmax(Y, dim=-1)
         return X, Y, META
+
+
+'''
+MOSEI - senti length 20
+MOSI - length 20
+'''
+class Multimodal_Senti_20(Dataset):
+    def __init__(self):
+        super(Multimodal_Senti_20, self).__init__()
+
+
+
+
 

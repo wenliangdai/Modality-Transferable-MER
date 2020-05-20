@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class EF_LSTM(nn.Module):
-    def __init__(self, num_classes, input_sizes, hidden_size, num_layers, dropout, bidirectional):
+    def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, bidirectional):
         super(EF_LSTM, self).__init__()
         self.LSTM = nn.LSTM(
             input_size=sum(input_sizes),
@@ -22,6 +22,7 @@ class EF_LSTM(nn.Module):
         self.out = nn.Sequential(
             nn.Linear(linear_in_size, linear_in_size),
             nn.ReLU(),
+            nn.Dropout(0.1),
             nn.Linear(linear_in_size, num_classes)
         )
 
@@ -39,18 +40,18 @@ class EF_LSTM(nn.Module):
 
 
 class LF_LSTM(nn.Module):
-    def __init__(self, num_classes, input_sizes, hidden_size, num_layers, dropout, bidirectional):
+    def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, bidirectional):
         super(LF_LSTM, self).__init__()
         self.LSTMs = nn.ModuleList([
             nn.LSTM(
                 input_size=input_size,
-                hidden_size=hidden_size,
+                hidden_size=hidden_sizes[i],
                 num_layers=num_layers,
                 dropout=dropout if num_layers > 1 else 0,
                 batch_first=True,
                 bidirectional=bidirectional
             )
-            for input_size in input_sizes
+            for i, input_size in enumerate(input_sizes)
         ])
 
         linear_in_size = hidden_size * 3
@@ -60,6 +61,7 @@ class LF_LSTM(nn.Module):
         self.out = nn.Sequential(
             nn.Linear(linear_in_size, int(linear_in_size / 3)),
             nn.ReLU(),
+            nn.Dropout(0.1),
             nn.Linear(int(linear_in_size / 3), num_classes)
         )
 
@@ -80,7 +82,7 @@ class LF_LSTM(nn.Module):
 
 
 class EF_LF_LSTM(nn.Module):
-    def __init__(self, num_classes, input_sizes, hidden_size, num_layers, dropout, bidirectional):
+    def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, bidirectional):
         super(EF_LF_LSTM, self).__init__()
         self.EF_LSTM = nn.LSTM(
             input_size=sum(input_sizes),
@@ -94,22 +96,24 @@ class EF_LF_LSTM(nn.Module):
         self.LF_LSTMs = nn.ModuleList([
             nn.LSTM(
                 input_size=input_size,
-                hidden_size=hidden_size,
+                hidden_size=hidden_sizes[i],
                 num_layers=num_layers,
                 dropout=dropout if num_layers > 1 else 0,
                 batch_first=True,
                 bidirectional=bidirectional
             )
-            for input_size in input_sizes
+            for i, input_size in enumerate(input_sizes)
         ])
 
-        linear_in_size = hidden_size * 4
+        # linear_in_size = hidden_size * 4
+        linear_in_size = hidden_size + sum(hidden_sizes)
         if bidirectional:
             linear_in_size = linear_in_size * 2
 
         self.out = nn.Sequential(
             nn.Linear(linear_in_size, int(linear_in_size / 2)),
             nn.ReLU(),
+            nn.Dropout(0.1),
             nn.Linear(int(linear_in_size / 2), num_classes)
         )
 
