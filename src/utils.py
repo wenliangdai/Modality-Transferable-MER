@@ -66,6 +66,7 @@ def get_data(args, phase):
 
         # Class order: Anger Disgust Fear Happy Sad Surprise
         if args['multi_level_classify']:
+            # TODO: this should be length 24
             for i in range(labels.shape[0]):
                 labels[i] = [cmumosei_round(l) for l in labels[i]]
         else:
