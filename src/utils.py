@@ -3,7 +3,7 @@ import os
 import pickle
 import h5py
 import numpy as np
-from src.dataset import Multimodal_Datasets
+# from src.dataset import Multimodal_Datasets
 from src.dataset import MOSI, MOSEI, IEMOCAP
 
 # def get_data(args, split='train'):
@@ -21,6 +21,11 @@ from src.dataset import MOSI, MOSEI, IEMOCAP
 #     return data
 
 def get_data(dataset, seq_len, file_folder, aligned, phase):
+    processed_path = f'./processed_datasets/{dataset}_{seq_len}_{phase}{"" if aligned else "_noalign"}.pt'
+    if os.path.exists(processed_path):
+        print(f'Load processed dataset! - {phase}')
+        return load(processed_path)
+
     if dataset == 'mosi':
         if seq_len == 20:
             data_path = os.path.join(file_folder, f'X_{phase}.h5')
@@ -30,37 +35,41 @@ def get_data(dataset, seq_len, file_folder, aligned, phase):
             text = data[:, :, :300]
             audio = data[:, :, 300:305]
             vision = data[:, :, 305:]
-            return MOSI(list(range(len(labels))), text, audio, vision, labels, is20=True)
+            this_dataset = MOSI(list(range(len(labels))), text, audio, vision, labels, is20=True)
         else:
             data_path = os.path.join(file_folder, f'mosi_data{"" if aligned else "_noalign"}.pkl')
-            data = pickle.load(open(data_path, 'rb'))
+            data = load(data_path)
             data = data[phase]
-            return MOSI(data['id'], data['text'], data['audio'], data['vision'], data['labels'])
+            this_dataset = MOSI(data['id'], data['text'], data['audio'], data['vision'], data['labels'])
     elif dataset == 'mosei_senti':
         if seq_len == 20:
             text_data = np.array(h5py.File(os.path.join(data_path, f'text_{phase}.h5'), 'r')['d1'])
             audio_data = np.array(h5py.File(os.path.join(data_path, f'audio_{phase}.h5'), 'r')['d1'])
             vision_data = np.array(h5py.File(os.path.join(data_path, f'vision_{phase}.h5'), 'r')['d1'])
             labels = np.array(h5py.File(os.path.join(data_path, f'y_{phase}.h5'), 'r')['d1'])
-            return MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels)
+            this_dataset = MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels)
         else:
             data_path = os.path.join(file_folder, f'mosei_senti_data{"" if aligned else "_noalign"}.pkl')
-            data = pickle.load(open(data_path, 'rb'))
+            data = load(data_path)
             data = data[phase]
-            return MOSEI(data['id'], data['text'], data['audio'], data['vision'], data['labels'])
+            this_dataset = MOSEI(data['id'], data['text'], data['audio'], data['vision'], data['labels'])
     elif dataset == 'mosei_emo':
         text_data = np.array(h5py.File(os.path.join(data_path, f'text_{phase}.h5'), 'r')['d1'])
         audio_data = np.array(h5py.File(os.path.join(data_path, f'audio_{phase}.h5'), 'r')['d1'])
         vision_data = np.array(h5py.File(os.path.join(data_path, f'vision_{phase}.h5'), 'r')['d1'])
         labels = np.array(h5py.File(os.path.join(data_path, f'ey_{phase}.h5'), 'r')['d1'])
-        return MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels)
+        this_dataset = MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels)
     elif dataset == 'iemocap':
         data_path = os.path.join(file_folder, f'mosi_data{"" if aligned else "_noalign"}.pkl')
-        data = pickle.load(open(data_path, 'rb'))
+        data = load(data_path)
         data = data[phase]
-        return IEMOCAP(list(range(len(data['labels']))), data['text'], data['audio'], data['vision'], data['labels'])
+        this_dataset = IEMOCAP(list(range(len(data['labels']))), data['text'], data['audio'], data['vision'], data['labels'])
     else:
         raise ValueError('Wrong dataset!')
+
+    save(this_dataset, processed_path)
+
+    return this_dataset
 
 def save(toBeSaved, filename, mode='wb'):
     dirname = os.path.dirname(filename)
