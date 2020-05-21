@@ -58,6 +58,9 @@ def get_data(dataset, seq_len, file_folder, aligned, phase):
         audio_data = np.array(h5py.File(os.path.join(data_path, f'audio_{phase}.h5'), 'r')['d1'])
         vision_data = np.array(h5py.File(os.path.join(data_path, f'vision_{phase}.h5'), 'r')['d1'])
         labels = np.array(h5py.File(os.path.join(data_path, f'ey_{phase}.h5'), 'r')['d1'])
+
+        # TODO: make labels to classes
+
         this_dataset = MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels)
     elif dataset == 'iemocap':
         data_path = os.path.join(file_folder, f'mosi_data{"" if aligned else "_noalign"}.pkl')
