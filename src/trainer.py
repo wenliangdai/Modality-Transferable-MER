@@ -102,11 +102,11 @@ class Trainer():
         total_logits = None
         total_Y = None
         for X, Y, META in tqdm(dataloader, desc='Train'):
-            _, X_text, X_audio, X_vision = X
+            X_text, X_audio, X_vision = X
             X_text = X_text.to(device=self.device)
             X_audio = X_audio.to(device=self.device)
             X_vision = X_vision.to(device=self.device)
-            Y = Y.squeeze(-1).to(device=self.device)
+            Y = Y.to(device=self.device)
 
             self.optimizer.zero_grad()
             with torch.set_grad_enabled(True):
@@ -132,11 +132,11 @@ class Trainer():
         total_logits = None
         total_Y = None
         for X, Y, META in tqdm(dataloader, desc=phase):
-            _, X_text, X_audio, X_vision = X
+            X_text, X_audio, X_vision = X
             X_text = X_text.to(device=self.device)
             X_audio = X_audio.to(device=self.device)
             X_vision = X_vision.to(device=self.device)
-            Y = Y.squeeze(-1).to(device=self.device)
+            Y = Y.to(device=self.device)
 
             with torch.set_grad_enabled(False):
                 logits = self.model(X_text, X_audio, X_vision)
