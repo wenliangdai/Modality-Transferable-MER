@@ -106,11 +106,12 @@ class Trainer():
             X_text = X_text.to(device=self.device)
             X_audio = X_audio.to(device=self.device)
             X_vision = X_vision.to(device=self.device)
-            Y = Y.to(device=self.device)
+            Y = Y.squeeze().to(device=self.device)
 
             self.optimizer.zero_grad()
             with torch.set_grad_enabled(True):
                 logits = self.model(X_text, X_audio, X_vision)
+                logits = logits.squeeze()
                 loss = self.criterion(logits, Y)
                 loss.backward()
                 epoch_loss += loss.item() * Y.size(0)
@@ -136,10 +137,11 @@ class Trainer():
             X_text = X_text.to(device=self.device)
             X_audio = X_audio.to(device=self.device)
             X_vision = X_vision.to(device=self.device)
-            Y = Y.to(device=self.device)
+            Y = Y.squeeze().to(device=self.device)
 
             with torch.set_grad_enabled(False):
                 logits = self.model(X_text, X_audio, X_vision)
+                logits = logits.squeeze()
                 loss = self.criterion(logits, Y)
                 epoch_loss += loss.item() * Y.size(0)
 
