@@ -20,7 +20,12 @@ from src.dataset import MOSI, MOSEI, IEMOCAP
 #         data = torch.load(data_path)
 #     return data
 
-def get_data(dataset, seq_len, file_folder, aligned, phase):
+def get_data(args, phase):
+    dataset = args['dataset']
+    seq_len = args['seq_len']
+    file_folder = args['file_folder']
+    aligned =args['aligned']
+
     processed_path = f'./processed_datasets/{dataset}_{seq_len}_{phase}{"" if aligned else "_noalign"}.pt'
     if os.path.exists(processed_path):
         print(f'Load processed dataset! - {phase}')
@@ -54,12 +59,17 @@ def get_data(dataset, seq_len, file_folder, aligned, phase):
             data = data[phase]
             this_dataset = MOSEI(data['id'], data['text'], data['audio'], data['vision'], data['labels'])
     elif dataset == 'mosei_emo':
-        text_data = np.array(h5py.File(os.path.join(data_path, f'text_{phase}.h5'), 'r')['d1'])
-        audio_data = np.array(h5py.File(os.path.join(data_path, f'audio_{phase}.h5'), 'r')['d1'])
-        vision_data = np.array(h5py.File(os.path.join(data_path, f'vision_{phase}.h5'), 'r')['d1'])
-        labels = np.array(h5py.File(os.path.join(data_path, f'ey_{phase}.h5'), 'r')['d1'])
+        text_data = np.array(h5py.File(os.path.join(file_folder, f'text_{phase}_emb.h5'), 'r')['d1'])
+        audio_data = np.array(h5py.File(os.path.join(file_folder, f'audio_{phase}.h5'), 'r')['d1'])
+        vision_data = np.array(h5py.File(os.path.join(file_folder, f'video_{phase}.h5'), 'r')['d1'])
+        labels = np.array(h5py.File(os.path.join(file_folder, f'ey_{phase}.h5'), 'r')['d1']) # (N, 6)
 
-        # TODO: make labels to classes
+        # Class order: Anger Disgust Fear Happy Sad Surprise
+        if args['multi_level_classify']:
+            for i in range(labels.shape[0]):
+                labels[i] = [cmumosei_round(l) for l in labels[i]]
+        else:
+            labels = np.array(labels > 0, np.int32)
 
         this_dataset = MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels)
     elif dataset == 'iemocap':
@@ -87,6 +97,23 @@ def load(filename, mode='rb'):
     loaded = pickle.load(file)
     file.close()
     return loaded
+
+def cmumosei_round(a):
+    if a < -2:
+        res = -3
+    if -2 <= a and a < -1:
+        res = -2
+    if -1 <= a and a < 0:
+        res = -1
+    if 0 <= a and a <= 0:
+        res = 0
+    if 0 < a and a <= 1:
+        res = 1
+    if 1 < a and a <= 2:
+        res = 2
+    if a > 2:
+        res = 3
+    return res
 
 # def save_load_name(args, name=''):
 #     if args.aligned:

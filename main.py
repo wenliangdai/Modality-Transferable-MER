@@ -39,9 +39,9 @@ if __name__ == "__main__":
     # valid_data = get_data(args, 'valid')
     # test_data = get_data(args, 'test')
 
-    train_data = get_data(args['dataset'], args['data_seq_len'], args['data_folder'], args['aligned'], 'train')
-    valid_data = get_data(args['dataset'], args['data_seq_len'], args['data_folder'], args['aligned'], 'valid')
-    test_data = get_data(args['dataset'], args['data_seq_len'], args['data_folder'], args['aligned'], 'test')
+    train_data = get_data(args, 'train')
+    valid_data = get_data(args, 'valid')
+    test_data = get_data(args, 'test')
 
     train_loader = DataLoader(train_data, batch_size=args['batch_size'], shuffle=True)
     valid_loader = DataLoader(valid_data, batch_size=args['batch_size'], shuffle=False)
