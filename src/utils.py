@@ -1,66 +1,7 @@
-import torch
 import os
 import pickle
-import h5py
+import torch
 import numpy as np
-from src.dataset import Multimodal_Datasets
-from src.dataset import MOSI, MOSEI, IEMOCAP
-
-# def get_data(args, split='train'):
-#     dataset = args['dataset']
-#     alignment = 'a' if args['aligned'] else 'na'
-#     data_path = os.path.join(args['data_path'], dataset) + f'_{split}_{alignment}.dt'
-#     print(data_path)
-#     if not os.path.exists(data_path):
-#         print(f"  - Creating new {split} data")
-#         data = Multimodal_Datasets(args['data_path'], dataset, split, args['aligned'])
-#         torch.save(data, data_path)
-#     else:
-#         print(f"  - Found cached {split} data")
-#         data = torch.load(data_path)
-#     return data
-
-def get_data(dataset, seq_len, file_folder, aligned, phase):
-    if dataset == 'mosi':
-        if seq_len == 20:
-            data_path = os.path.join(file_folder, f'X_{phase}.h5')
-            label_path = os.path.join(file_folder, f'y_{phase}.h5')
-            data = np.array(h5py.File(data_path, 'r')['data'])
-            labels = np.array(h5py.File(label_path.replace('X', 'y'), 'r')['data'])
-            text = data[:, :, :300]
-            audio = data[:, :, 300:305]
-            vision = data[:, :, 305:]
-            return MOSI(list(range(len(labels))), text, audio, vision, labels, is20=True)
-        else:
-            data_path = os.path.join(file_folder, f'mosi_data{"" if aligned else "_noalign"}.pkl')
-            data = pickle.load(open(data_path, 'rb'))
-            data = data[phase]
-            return MOSI(data['id'], data['text'], data['audio'], data['vision'], data['labels'])
-    elif dataset == 'mosei_senti':
-        if seq_len == 20:
-            text_data = np.array(h5py.File(os.path.join(data_path, f'text_{phase}.h5'), 'r')['d1'])
-            audio_data = np.array(h5py.File(os.path.join(data_path, f'audio_{phase}.h5'), 'r')['d1'])
-            vision_data = np.array(h5py.File(os.path.join(data_path, f'vision_{phase}.h5'), 'r')['d1'])
-            labels = np.array(h5py.File(os.path.join(data_path, f'y_{phase}.h5'), 'r')['d1'])
-            return MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels)
-        else:
-            data_path = os.path.join(file_folder, f'mosei_senti_data{"" if aligned else "_noalign"}.pkl')
-            data = pickle.load(open(data_path, 'rb'))
-            data = data[phase]
-            return MOSEI(data['id'], data['text'], data['audio'], data['vision'], data['labels'])
-    elif dataset == 'mosei_emo':
-        text_data = np.array(h5py.File(os.path.join(data_path, f'text_{phase}.h5'), 'r')['d1'])
-        audio_data = np.array(h5py.File(os.path.join(data_path, f'audio_{phase}.h5'), 'r')['d1'])
-        vision_data = np.array(h5py.File(os.path.join(data_path, f'vision_{phase}.h5'), 'r')['d1'])
-        labels = np.array(h5py.File(os.path.join(data_path, f'ey_{phase}.h5'), 'r')['d1'])
-        return MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels)
-    elif dataset == 'iemocap':
-        data_path = os.path.join(file_folder, f'mosi_data{"" if aligned else "_noalign"}.pkl')
-        data = pickle.load(open(data_path, 'rb'))
-        data = data[phase]
-        return IEMOCAP(list(range(len(data['labels']))), data['text'], data['audio'], data['vision'], data['labels'])
-    else:
-        raise ValueError('Wrong dataset!')
 
 def save(toBeSaved, filename, mode='wb'):
     dirname = os.path.dirname(filename)
@@ -76,21 +17,56 @@ def load(filename, mode='rb'):
     file.close()
     return loaded
 
-# def save_load_name(args, name=''):
-#     if args.aligned:
-#         name = name if len(name) > 0 else 'aligned_model'
-#     elif not args.aligned:
-#         name = name if len(name) > 0 else 'nonaligned_model'
+def pad_sents(sents, pad_token):
+    sents_padded = []
+    lens = get_lens(sents)
+    max_len = max(lens)
+    sents_padded = [sents[i] + [pad_token] * (max_len - l) for i, l in enumerate(lens)]
+    return sents_padded
 
-#     return name + '_' + args.model
+def sort_sents(sents, reverse=True):
+    sents.sort(key=(lambda s: len(s)), reverse=reverse)
+    return sents
+
+def get_mask(sents, unmask_idx=1, mask_idx=0):
+    lens = get_lens(sents)
+    max_len = max(lens)
+    mask = [([unmask_idx] * l + [mask_idx] * (max_len - l)) for l in lens]
+    return mask
+
+def get_lens(sents):
+    return [len(sent) for sent in sents]
+
+def get_max_len(sents):
+    max_len = max([len(sent) for sent in sents])
+    return max_len
+
+def truncate_sents(sents, length):
+    sents = [sent[:length] for sent in sents]
+    return sents
+
+def get_loss_weight(labels, label_order):
+    nums = [np.sum(labels == lo) for lo in label_order]
+    loss_weight = torch.tensor([n / len(labels) for n in nums])
+    return loss_weight
+
+def capitalize_first_letter(data):
+    if type(data) == 'str':
+        return data.capitalize()
+    elif type(data) == 'list':
+        return [word.capitalize() for word in data]
+    elif type(data) == 'numpy.ndarray':
+        return np.array([word.capitalize() for word in data])
 
 
-# def save_model(args, model, name=''):
-#     name = save_load_name(args, name)
-#     torch.save(model, f'pre_trained_models/{name}.pt')
 
+if __name__ == '__main__':
+    from tqdm import tqdm
+    f = open('/Users/wenliangdai/Documents/Codes/Datasets/glove.840B.300d.txt', 'r', encoding='utf-8')
+    lines = f.readlines()
+    word2emb = {}
+    for line in tqdm(lines):
+        line = line.replace('\xa0', '').split()
+        word2emb[line[0]] = [float(n) for n in line[1:]]
 
-# def load_model(args, name=''):
-#     name = save_load_name(args, name)
-#     model = torch.load(f'pre_trained_models/{name}.pt')
-#     return model
+    save(word2emb, '/Users/wenliangdai/Documents/glove.dict.840B.300d.pt')

@@ -42,3 +42,29 @@ def eval_mosei_senti(results, truths, exclude_zero=False):
     # print("-" * 50)
 
     return mae, acc2, acc5, acc7, f1, corr
+
+def eval_iemocap(results, truths, single=-1):
+    emos = ["Neutral", "Happy", "Sad", "Angry"]
+    if single < 0: # single means evaluating in a (one vs. all) way
+        test_preds = results.view(-1, 4, 2).cpu().detach().numpy()
+        test_truth = truths.view(-1, 4).cpu().detach().numpy()
+
+        for emo_ind in range(4):
+            print(f"{emos[emo_ind]}: ")
+            test_preds_i = np.argmax(test_preds[:, emo_ind], axis=1)
+            test_truth_i = test_truth[:, emo_ind]
+            f1 = f1_score(test_truth_i, test_preds_i, average='weighted')
+            acc = accuracy_score(test_truth_i, test_preds_i)
+            print("  - F1 Score: ", f1)
+            print("  - Accuracy: ", acc)
+    else:
+        test_preds = results.view(-1, 2).cpu().detach().numpy()
+        test_truth = truths.view(-1).cpu().detach().numpy()
+
+        print(f"{emos[single]}: ")
+        test_preds_i = np.argmax(test_preds, axis=1)
+        test_truth_i = test_truth
+        f1 = f1_score(test_truth_i, test_preds_i, average='weighted')
+        acc = accuracy_score(test_truth_i, test_preds_i)
+        print("  - F1 Score: ", f1)
+        print("  - Accuracy: ", acc)

@@ -113,14 +113,18 @@ class MOSEI(Dataset):
     def __getitem__(self, index):
         return (self.text[index], self.audio[index], self.vision[index]), self.labels[index], self.id[index]
 
+
 class IEMOCAP(Dataset):
     def __init__(self, id, text, audio, vision, labels):
         super(IEMOCAP, self).__init__()
         self.vision = torch.tensor(vision, dtype=torch.float32)
-        self.labels = torch.tensor(labels.squeeze(), dtype=torch.float32)
+        self.labels = torch.tensor(labels, dtype=torch.int32)
         self.text = torch.tensor(text, dtype=torch.float32)
         self.audio = torch.tensor(audio, dtype=torch.float32)
         self.audio[self.audio == -np.inf] = 0
+
+        # "Neutral", "Happy", "Sad", "Angry"
+        self.labels = torch.argmax(self.labels, dim=-1)
         self.id = id
 
     def get_seq_len(self):

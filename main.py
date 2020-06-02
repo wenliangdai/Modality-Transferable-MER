@@ -3,7 +3,8 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from src.cli import get_args
-from src.utils import get_data
+from src.data import get_data
+from src.utils import glove_emo_path
 from src.trainer import Trainer
 from src.models import baselines # EF_LSTM, LF_LSTM, EF_LF_LSTM
 from src.models.transformers import EF_Transformer
@@ -61,6 +62,8 @@ if __name__ == "__main__":
 
     model_type = args['model'].lower()
     fusion_type = args['fusion'].lower()
+
+    glove_emo_embs = glove_emo_path(path=args['glove_emo_path'])
 
     if model_type == 'mult':
         mult_params = MULT_PARAMS[args['dataset']]

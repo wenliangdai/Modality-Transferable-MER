@@ -26,6 +26,8 @@ def get_args():
     parser.add_argument('--aligned', action='store_true', help='Aligned experiment or not')
     parser.add_argument('--data-seq-len', help='Data sequence length', type=int, required=False, default=50)
     parser.add_argument('--data-folder', type=str, default='data', help='path for storing the dataset')
+    parser.add_argument('--glove-emo-path', type=str, default='data/glove.emotions.840B.300d.pt')
+    parser.add_argument('--emocap', action='store_true', help='Capitalize the first letter of emotion words')
 
     parser.add_argument('--ckpt', type=str, required=False, default='')
 
