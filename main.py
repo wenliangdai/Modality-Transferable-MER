@@ -76,6 +76,8 @@ if __name__ == "__main__":
             MODEL = baselines.EF_LSTM
         elif fusion_type == 'eflf':
             MODEL = baselines.EF_LF_LSTM
+        elif fusion_type == 'ts':
+            MODEL = baselines.TextSelectiveLSTM
         else:
             raise ValueError('Wrong fusion!')
 

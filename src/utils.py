@@ -22,9 +22,9 @@ from src.dataset import MOSI, MOSEI, IEMOCAP
 
 def get_data(args, phase):
     dataset = args['dataset']
-    seq_len = args['seq_len']
-    file_folder = args['file_folder']
-    aligned =args['aligned']
+    seq_len = args['data_seq_len']
+    file_folder = args['data_folder']
+    aligned = args['aligned']
 
     processed_path = f'./processed_datasets/{dataset}_{seq_len}_{phase}{"" if aligned else "_noalign"}.pt'
     if os.path.exists(processed_path):
