@@ -3,12 +3,13 @@ import torch
 NUM_CLASSES = {
     'mosi': 1,
     'mosei_senti': 1,
-    'iemocap': 8
+    'mosei_emo': 6,
+    'iemocap': 4 # if full, then should be 9
 }
 
 EMOTIONS = {
-    'mosei': ['anger', 'disgust', 'fear', 'happy', 'sad', 'surprise'],
-    'iemocap': ['happy', 'sad', 'angry', 'neutral']
+    'mosei_emo': ['anger', 'disgust', 'fear', 'happy', 'sad', 'surprise'],
+    'iemocap': ['neutral', 'happy', 'sad', 'angry']
 }
 
 # input_sizes = {

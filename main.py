@@ -3,13 +3,14 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from src.cli import get_args
-from src.data import get_data
-from src.utils import glove_emo_path
+from src.utils import capitalize_first_letter
+from src.data import get_data, get_glove_emotion_embs
 from src.trainer import Trainer
 from src.models import baselines # EF_LSTM, LF_LSTM, EF_LF_LSTM
 from src.models.transformers import EF_Transformer
 from src.models.mult import MULTModel
-from src.config import NUM_CLASSES, CRITERIONS, MULT_PARAMS
+from src.models.temp import EmotionEmbAttnModel
+from src.config import NUM_CLASSES, CRITERIONS, MULT_PARAMS, EMOTIONS
 
 if __name__ == "__main__":
     args = get_args()
@@ -63,8 +64,6 @@ if __name__ == "__main__":
     model_type = args['model'].lower()
     fusion_type = args['fusion'].lower()
 
-    glove_emo_embs = glove_emo_path(path=args['glove_emo_path'])
-
     if model_type == 'mult':
         mult_params = MULT_PARAMS[args['dataset']]
         mult_params['orig_d_l'] = modal_dims[0]
@@ -104,6 +103,26 @@ if __name__ == "__main__":
             raise ValueError('Wrong fusion!')
 
         model = MODEL()
+    elif model_type == 'eea':
+        emo_list = EMOTIONS[args['dataset']]
+        if args['emocap']:
+            emo_list = capitalize_first_letter(emo_list)
+        emo_weights = get_glove_emotion_embs(args['glove_emo_path'])
+        emo_weight = []
+        for emo in emo_list:
+            emo_weight.append(emo_weights[emo])
+
+        MODEL = EmotionEmbAttnModel
+        model = MODEL(
+            num_classes=NUM_CLASSES[args['dataset']],
+            input_sizes=modal_dims,
+            hidden_size=args['hidden_size'],
+            hidden_sizes=args['hidden_sizes'],
+            num_layers=args['num_layers'],
+            dropout=args['dropout'],
+            bidirectional=args['bidirectional'],
+            emo_weight=emo_weight
+        )
     else:
         raise ValueError('Wrong model!')
 

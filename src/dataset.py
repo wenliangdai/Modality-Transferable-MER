@@ -99,7 +99,7 @@ class MOSEI(Dataset):
         self.text = torch.tensor(text, dtype=torch.float32)
         self.audio = torch.tensor(audio, dtype=torch.float32)
         self.audio[self.audio == -np.inf] = 0
-        self.id = id.tolist()
+        self.id = id
 
     def get_seq_len(self):
         return self.text.shape[1], self.audio.shape[1], self.vision.shape[1]

@@ -58,15 +58,30 @@ def capitalize_first_letter(data):
     elif type(data) == 'numpy.ndarray':
         return np.array([word.capitalize() for word in data])
 
+def cmumosei_round(a):
+    if a < -2:
+        res = -3
+    if -2 <= a and a < -1:
+        res = -2
+    if -1 <= a and a < 0:
+        res = -1
+    if 0 <= a and a <= 0:
+        res = 0
+    if 0 < a and a <= 1:
+        res = 1
+    if 1 < a and a <= 2:
+        res = 2
+    if a > 2:
+        res = 3
+    return res
 
 
-if __name__ == '__main__':
-    from tqdm import tqdm
-    f = open('/Users/wenliangdai/Documents/Codes/Datasets/glove.840B.300d.txt', 'r', encoding='utf-8')
-    lines = f.readlines()
-    word2emb = {}
-    for line in tqdm(lines):
-        line = line.replace('\xa0', '').split()
-        word2emb[line[0]] = [float(n) for n in line[1:]]
-
-    save(word2emb, '/Users/wenliangdai/Documents/glove.dict.840B.300d.pt')
+# if __name__ == '__main__':
+#     from tqdm import tqdm
+#     f = open('/Users/wenliangdai/Documents/Codes/Datasets/glove.840B.300d.txt', 'r', encoding='utf-8')
+#     lines = f.readlines()
+#     word2emb = {}
+#     for line in tqdm(lines):
+#         line = line.replace('\xa0', '').split()
+#         word2emb[line[0]] = [float(n) for n in line[1:]]
+#     save(word2emb, '/Users/wenliangdai/Documents/glove.dict.840B.300d.pt')
