@@ -158,7 +158,10 @@ class Trainer():
         return eval_mosei_senti(total_logits, total_Y, exclude_zero=self.args['exclude_zero'])
 
     def get_saving_file_name(self):
-        return f"{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt"
+        name = f"{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt"
+        if self.args['gru']:
+            name = f'gru_{name}'
+        return name
 
     def save_stats(self):
         stats = {

@@ -12,7 +12,7 @@ def get_args():
     parser.add_argument('-ep', '--epochs', help='Number of epochs', type=int, required=True)
     parser.add_argument('-es', '--early-stop', help='Early stop', type=int, required=False, default=4)
     parser.add_argument('-cu', '--cuda', help='Cude device number', type=str, required=False, default='0')
-    parser.add_argument('-mo', '--model', help='model type', type=str, required=False, default='lstm')
+    parser.add_argument('-mo', '--model', help='model type', type=str, required=False, default='rnn')
     parser.add_argument('-fu', '--fusion', help='modality fusion type', type=str, required=False, default='ef')
     parser.add_argument('-cl', '--clip', help='Use clip to gradients', type=float, required=False, default=-1.0)
     parser.add_argument('-sc', '--scheduler', help='Use scheduler to optimizer', action='store_true')
@@ -38,6 +38,8 @@ def get_args():
     parser.add_argument('-hs', '--hidden-size', help='hidden vector size of LSTM', type=int, required=False, default=300)
     parser.add_argument('-hss', '--hidden-sizes', help='hidden vector size of LSTM', nargs='+', type=int, required=False, default=[256, 64, 32])
     parser.add_argument('-bi', '--bidirectional', help='Use Bi-LSTM', action='store_true')
+    parser.add_argument('--gru', help='Use GRU rather than LSTM', action='store_true')
+
 
     # TRANSFORMER
     parser.add_argument('--hidden-dim', help='Transformers Hidden Unit Size', type=int, required=False, default=40)

@@ -71,15 +71,15 @@ if __name__ == "__main__":
         mult_params['orig_d_v'] = modal_dims[2]
         mult_params['hidden_dim'] = args['hidden_dim']
         model = MULTModel(mult_params)
-    elif model_type == 'lstm':
+    elif model_type == 'rnn':
         if fusion_type == 'lf':
-            MODEL = baselines.LF_LSTM
+            MODEL = baselines.LF_RNN
         elif fusion_type == 'ef':
-            MODEL = baselines.EF_LSTM
+            MODEL = baselines.EF_RNN
         elif fusion_type == 'eflf':
-            MODEL = baselines.EF_LF_LSTM
+            MODEL = baselines.EF_LF_RNN
         elif fusion_type == 'ts':
-            MODEL = baselines.TextSelectiveLSTM
+            MODEL = baselines.TextSelectiveRNN
         else:
             raise ValueError('Wrong fusion!')
 
@@ -90,7 +90,8 @@ if __name__ == "__main__":
             hidden_sizes=args['hidden_sizes'],
             num_layers=args['num_layers'],
             dropout=args['dropout'],
-            bidirectional=args['bidirectional']
+            bidirectional=args['bidirectional'],
+            gru=args['gru']
         )
     elif model_type == 'transformer':
         if fusion_type == 'lf':
@@ -121,7 +122,8 @@ if __name__ == "__main__":
             num_layers=args['num_layers'],
             dropout=args['dropout'],
             bidirectional=args['bidirectional'],
-            emo_weight=emo_weight
+            emo_weight=emo_weight,
+            gru=args['gru']
         )
     else:
         raise ValueError('Wrong model!')

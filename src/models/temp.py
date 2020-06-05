@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 
 class EmotionEmbAttnModel(nn.Module):
-    def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, bidirectional, emo_weight):
+    def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, emo_weight, bidirectional=False, gru=False):
         super(EmotionEmbAttnModel, self).__init__()
 
         self.num_classes = num_classes
@@ -11,8 +11,10 @@ class EmotionEmbAttnModel(nn.Module):
         self.affineVisual = nn.Linear(hidden_size, hidden_size)
         self.affineAudio = nn.Linear(hidden_size, hidden_size)
 
-        self.LSTMs = nn.ModuleList([
-            nn.LSTM(
+        RnnModel = nn.GRU if gru else nn.LSTM
+
+        self.RNNs = nn.ModuleList([
+            RnnModel(
                 input_size=input_size,
                 hidden_size=hidden_size,
                 num_layers=num_layers,
@@ -48,9 +50,9 @@ class EmotionEmbAttnModel(nn.Module):
 
     def forward(self, X_text, X_audio, X_visual):
         # (batch, seq_len, num_directions * hidden_size)
-        output_text, _ = self.LSTMs[0](X_text)
-        output_audio, _ = self.LSTMs[1](X_audio)
-        output_visual, _ = self.LSTMs[2](X_visual)
+        output_text, _ = self.RNNs[0](X_text)
+        output_audio, _ = self.RNNs[1](X_audio)
+        output_visual, _ = self.RNNs[2](X_visual)
 
         batch_size = output_text.size(0)
 
