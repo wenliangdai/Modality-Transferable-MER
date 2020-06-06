@@ -5,7 +5,8 @@ from torch.utils.data import DataLoader
 from src.cli import get_args
 from src.utils import capitalize_first_letter
 from src.data import get_data, get_glove_emotion_embs
-from src.trainer import SentiTrainer, EmoTrainer
+from src.trainers.sentiment import SentiTrainer
+from src.trainers.emotion import EmoTrainer
 from src.models import baselines # EF_LSTM, LF_LSTM, EF_LF_LSTM
 from src.models.transformers import EF_Transformer
 from src.models.mult import MULTModel

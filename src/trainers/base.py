@@ -1,10 +1,7 @@
 import os
 import copy
-import torch
-from tqdm import tqdm
-from tabulate import tabulate
-from src.evaluate import eval_mosei_senti, eval_iemocap
 from src.utils import save
+
 
 class TrainerBase():
     def __init__(self, args, model, criterion, optimizer, scheduler, device, dataloaders):
