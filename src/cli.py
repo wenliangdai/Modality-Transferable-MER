@@ -21,6 +21,12 @@ def get_args():
     parser.add_argument('-ez', '--exclude-zero', help='Exclude zero in evaluation', action='store_true')
     parser.add_argument('--loss', help='loss function: l1/mse/ce', type=str, required=False, default='l1')
 
+    parser.add_argument('--threshold', help='Threshold of for multi-label emotion recognition', type=float, required=False, default=0.5)
+    # parser.add_argument('--threshold-wacc', help='Threshold of weighted accuracy for multi-label emotion recognition', type=float, required=False, default=0.2)
+    # parser.add_argument('--threshold-f1', help='Threshold of f1 score for multi-label emotion recognition', type=float, required=False, default=0.4)
+
+    parser.add_argument('--verbose', help='Verbose mode to print more logs', action='store_true')
+
     # Dataset
     parser.add_argument('--dataset', type=str, default='mosei_senti', help='Dataset to use')
     parser.add_argument('--aligned', action='store_true', help='Aligned experiment or not')
