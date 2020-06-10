@@ -12,6 +12,8 @@ from src.models.transformers import EF_Transformer
 from src.models.mult import MULTModel
 from src.models.temp import EmotionEmbAttnModel
 from src.config import NUM_CLASSES, CRITERIONS, MULT_PARAMS, EMOTIONS
+from src.sampler import ImbalancedDatasetSampler
+
 
 if __name__ == "__main__":
     args = get_args()
@@ -38,15 +40,11 @@ if __name__ == "__main__":
 
     print("Start loading the data....")
 
-    # train_data = get_data(args, 'train')
-    # valid_data = get_data(args, 'valid')
-    # test_data = get_data(args, 'test')
-
     train_data = get_data(args, 'train')
     valid_data = get_data(args, 'valid')
     test_data = get_data(args, 'test')
 
-    train_loader = DataLoader(train_data, batch_size=args['batch_size'], shuffle=True)
+    train_loader = DataLoader(train_data, batch_size=args['batch_size'], shuffle=False) # , sampler=ImbalancedDatasetSampler(train_data)
     valid_loader = DataLoader(valid_data, batch_size=args['batch_size'], shuffle=False)
     test_loader = DataLoader(test_data, batch_size=args['batch_size'], shuffle=False)
 
@@ -123,6 +121,7 @@ if __name__ == "__main__":
             num_layers=args['num_layers'],
             dropout=args['dropout'],
             bidirectional=args['bidirectional'],
+            device=device,
             emo_weight=emo_weight,
             gru=args['gru']
         )
@@ -130,6 +129,8 @@ if __name__ == "__main__":
         raise ValueError('Wrong model!')
 
     model = model.to(device=device)
+
+    print(model)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
 
@@ -141,6 +142,11 @@ if __name__ == "__main__":
         criterion = torch.nn.MSELoss()
     elif args['loss'] == 'ce':
         criterion = torch.nn.CrossEntropyLoss()
+    elif args['loss'] == 'bce':
+        pos_weight = train_data.get_pos_weight()
+        # print(pos_weight)
+        pos_weight = pos_weight.to(device)
+        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     if args['dataset'] == 'mosi' or args['dataset'] == 'mosei_senti':
         TRAINER = SentiTrainer
