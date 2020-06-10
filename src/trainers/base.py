@@ -30,13 +30,14 @@ class TrainerBase():
 
     def get_saving_file_name(self):
         best_test_stats = self.all_test_stats[self.best_epoch - 1]
-        name = f"{self.args['model']}_wacc_{best_test_stats[0][6]}_f1_{best_test_stats[1][6]}_auc_{best_test_stats[2][6]}_rand{self.args['seed']}.pt"
+        name = f"{self.args['model']}_wacc_{best_test_stats[0][6]:.4f}_f1_{best_test_stats[1][6]:.4f}_auc_{best_test_stats[2][6]:.4f}_ep{self.best_epoch}_rand{self.args['seed']}_{self.args['hidden_sizes']}_{self.args['modalities']}.pt"
         if self.args['gru']:
             name = f'gru_{name}'
         return name
 
     def save_stats(self):
         stats = {
+            'args': self.args,
             'train_stats': self.all_train_stats,
             'valid_stats': self.all_valid_stats,
             'test_stats': self.all_test_stats,
@@ -54,7 +55,9 @@ class TrainerBase():
             for stat in self.all_test_stats[self.best_epoch - 1]:
                 for n in stat:
                     f.write(f'{n:.4f},')
-                f.write('\n')
+            f.write('\n')
+            f.write(str(self.args))
+            f.write('\n')
 
     def save_model(self):
         save(self.best_model, os.path.join(self.saving_path, 'models', self.get_saving_file_name()))
