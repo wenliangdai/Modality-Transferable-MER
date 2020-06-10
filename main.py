@@ -44,7 +44,7 @@ if __name__ == "__main__":
     valid_data = get_data(args, 'valid')
     test_data = get_data(args, 'test')
 
-    train_loader = DataLoader(train_data, batch_size=args['batch_size'], shuffle=False) # , sampler=ImbalancedDatasetSampler(train_data)
+    train_loader = DataLoader(train_data, batch_size=args['batch_size'], shuffle=True) # , sampler=ImbalancedDatasetSampler(train_data)
     valid_loader = DataLoader(valid_data, batch_size=args['batch_size'], shuffle=False)
     test_loader = DataLoader(test_data, batch_size=args['batch_size'], shuffle=False)
 
@@ -121,6 +121,7 @@ if __name__ == "__main__":
             num_layers=args['num_layers'],
             dropout=args['dropout'],
             bidirectional=args['bidirectional'],
+            modalities=args['modalities'],
             device=device,
             emo_weight=emo_weight,
             gru=args['gru']

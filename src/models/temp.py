@@ -36,17 +36,20 @@ class EmotionEmbAttnModel(nn.Module):
             ) for i, input_size in enumerate(input_sizes)
         ])
 
-        linearInSize = hidden_size
-        if bidirectional:
-            linearInSize = linearInSize * 2
+        self.modality_weights = nn.Linear(len(modalities), 1, bias=False)
+        self.modality_weights.weight = nn.Parameter(F.softmax(torch.ones(len(modalities)), dim=0))
 
-        self.out = nn.Sequential(
-            nn.Linear(linearInSize, int(linearInSize / 3)),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(int(linearInSize / 3), num_classes)
-            # nn.Sigmoid()
-        )
+        # linearInSize = hidden_size
+        # if bidirectional:
+        #     linearInSize = linearInSize * 2
+
+        # self.out = nn.Sequential(
+        #     nn.Linear(linearInSize, int(linearInSize / 3)),
+        #     nn.ReLU(),
+        #     nn.Dropout(dropout),
+        #     nn.Linear(int(linearInSize / 3), num_classes)
+        #     # nn.Sigmoid()
+        # )
 
         # self.out = nn.Sequential(
         #     nn.Linear(emo_weight.size(0), num_classes),
@@ -68,14 +71,16 @@ class EmotionEmbAttnModel(nn.Module):
         # TODO: try residual connection
 
         batch_size = X_text.size(0)
+        text_emo_vecs_origin = self.textEmoEmbs(torch.LongTensor(list(range(self.num_classes))).to(self.device))
         logits = None
+        scores = []
         if 't' in self.modalities:
             output_text, _ = self.RNNs[0](X_text)
             output_text = output_text[:, -1, :]
-            text_emo_vecs_origin = self.textEmoEmbs(torch.LongTensor(list(range(self.num_classes))).to(self.device))
             text_emo_vecs = text_emo_vecs_origin.unsqueeze(0).repeat(batch_size, 1, 1)
             text_attn_weights = self.attention(output_text, text_emo_vecs)
-            logits = text_attn_weights if logits is None else logits + text_attn_weights
+            # logits = text_attn_weights if logits is None else logits + text_attn_weights
+            scores.append(text_attn_weights.unsqueeze(0))
 
         if 'a' in self.modalities:
             output_audio, _ = self.RNNs[1](X_audio)
@@ -83,7 +88,8 @@ class EmotionEmbAttnModel(nn.Module):
             audio_emo_vecs = self.affineAudio(text_emo_vecs_origin)
             audio_emo_vecs = audio_emo_vecs.unsqueeze(0).repeat(batch_size, 1, 1)
             audio_attn_weights = self.attention(output_audio, audio_emo_vecs)
-            logits = audio_attn_weights if logits is None else logits + audio_attn_weights
+            # logits = audio_attn_weights if logits is None else logits + audio_attn_weights
+            scores.append(audio_attn_weights.unsqueeze(0))
 
         if 'v' in self.modalities:
             output_visual, _ = self.RNNs[2](X_visual)
@@ -91,6 +97,16 @@ class EmotionEmbAttnModel(nn.Module):
             visual_emo_vecs = self.affineVisual(text_emo_vecs_origin)
             visual_emo_vecs = visual_emo_vecs.unsqueeze(0).repeat(batch_size, 1, 1)
             visual_attn_weights = self.attention(output_visual, visual_emo_vecs)
-            logits = visual_attn_weights if logits is None else logits + visual_attn_weights
+            # logits = visual_attn_weights if logits is None else logits + visual_attn_weights
+            scores.append(visual_attn_weights.unsqueeze(0))
+
+        scores = torch.cat(tuple(scores), dim=0).transpose(0, 2)
+        logits = self.modality_weights(scores)
+        logits = logits.squeeze().t()
+        # for i in range(len(self.modalities)):
+        #     if i == 0:
+        #         logits = scores[i] * self.modality_weights[i]
+        #     else:
+        #         logits += scores[i] * self.modality_weights[i]
 
         return logits
