@@ -17,28 +17,28 @@ class EmoTrainer(TrainerBase):
             [-float('inf')] * (model.num_classes + 1), # single wacc
             [-float('inf')] * (model.num_classes + 1), # single f1
             [-float('inf')] * (model.num_classes + 1), # single auc
-            [-float('inf')] * 4 # acc all
+            [-float('inf')] * 3 # acc all
         ]
 
         self.prev_valid_stats = [
             [-float('inf')] * (model.num_classes + 1), # single wacc
             [-float('inf')] * (model.num_classes + 1), # single f1
             [-float('inf')] * (model.num_classes + 1), # single auc
-            [-float('inf')] * 4 # acc all
+            [-float('inf')] * 3 # acc all
         ]
 
         self.prev_test_stats = [
             [-float('inf')] * (model.num_classes + 1), # single wacc
             [-float('inf')] * (model.num_classes + 1), # single f1
             [-float('inf')] * (model.num_classes + 1), # single auc
-            [-float('inf')] * 4 # acc all
+            [-float('inf')] * 3 # acc all
         ]
 
         self.best_valid_stats = [
             [-float('inf')] * (model.num_classes + 1), # single wacc
             [-float('inf')] * (model.num_classes + 1), # single f1
             [-float('inf')] * (model.num_classes + 1), # single auc
-            [-float('inf')] * 4 # acc all
+            [-float('inf')] * 3 # acc all
         ]
 
         self.best_epoch = -1
@@ -62,7 +62,7 @@ class EmoTrainer(TrainerBase):
 
             for i in range(len(headers)):
                 for j in range(len(valid_stats[i])):
-                    is_pivot = (i == 3 and j == 3) # auc
+                    is_pivot = (i == 2 and j == 6) # auc average
                     if valid_stats[i][j] > self.best_valid_stats[i][j]:
                         self.best_valid_stats[i][j] = valid_stats[i][j]
                         if is_pivot:
@@ -95,6 +95,8 @@ class EmoTrainer(TrainerBase):
         self.save_stats()
         self.save_model()
         print('Results and model are saved!')
+
+        print(self.model.modality_weights.weight)
 
     def train_one_epoch(self):
         self.model.train()

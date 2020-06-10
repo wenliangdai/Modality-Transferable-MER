@@ -76,7 +76,7 @@ def eval_mosei_emo(preds, truths, threshold, verbose=False):
 
     preds = torch.sigmoid(preds)
 
-    auc_score = roc_auc_score(truths.numpy(), preds.numpy())
+    # auc_score = roc_auc_score(truths.numpy(), preds.numpy())
 
     aucs = []
     for emo_ind in range(num_emo):
@@ -134,7 +134,7 @@ def eval_mosei_emo(preds, truths, threshold, verbose=False):
     acc_intersect /= total # at least one emotion is predicted（对于每个数据，至少预测正确一个 emotion 的正确率）
     acc_subset /= total # predicted is a subset of truth（对于每个数据，至少预测正确一个 emotion，并且预测存在的 emotion 必须是 truth 的子集 的正确率）
 
-    return accs, f1s, aucs, [acc_strict, acc_subset, acc_intersect, auc_score]
+    return accs, f1s, aucs, [acc_strict, acc_subset, acc_intersect]
 
 
 def eval_iemocap(preds, truths, single=False):
