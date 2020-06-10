@@ -27,6 +27,8 @@ def get_args():
 
     parser.add_argument('--verbose', help='Verbose mode to print more logs', action='store_true')
 
+    parser.add_argument('-mod', '--modalities', help='what modalities to use', type=str, required=False, default='tav')
+
     # Dataset
     parser.add_argument('--dataset', type=str, default='mosei_senti', help='Dataset to use')
     parser.add_argument('--aligned', action='store_true', help='Aligned experiment or not')
