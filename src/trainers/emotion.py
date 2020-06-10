@@ -1,8 +1,9 @@
 import copy
 import torch
+from torch.nn.utils import clip_grad_norm_
 from tqdm import tqdm
 from tabulate import tabulate
-from src.evaluate import eval_mosei_senti, eval_iemocap
+from src.evaluate import eval_mosei_emo
 from src.trainers.base import TrainerBase
 
 class EmoTrainer(TrainerBase):
@@ -12,19 +13,45 @@ class EmoTrainer(TrainerBase):
         self.all_valid_stats = []
         self.all_test_stats = []
 
-        self.prev_train_stats = [float('inf')] + [-float('inf')] * 5
-        self.prev_valid_stats = [float('inf')] + [-float('inf')] * 5
-        self.prev_test_stats = [float('inf')] + [-float('inf')] * 5
+        self.prev_train_stats = [
+            [-float('inf')] * (model.num_classes + 1), # single wacc
+            [-float('inf')] * (model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 1), # single auc
+            [-float('inf')] * 4 # acc all
+        ]
 
-        self.best_valid_stats = [float('inf')] + [-float('inf')] * 5
+        self.prev_valid_stats = [
+            [-float('inf')] * (model.num_classes + 1), # single wacc
+            [-float('inf')] * (model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 1), # single auc
+            [-float('inf')] * 4 # acc all
+        ]
+
+        self.prev_test_stats = [
+            [-float('inf')] * (model.num_classes + 1), # single wacc
+            [-float('inf')] * (model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 1), # single auc
+            [-float('inf')] * 4 # acc all
+        ]
+
+        self.best_valid_stats = [
+            [-float('inf')] * (model.num_classes + 1), # single wacc
+            [-float('inf')] * (model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 1), # single auc
+            [-float('inf')] * 4 # acc all
+        ]
+
         self.best_epoch = -1
 
     def train(self):
-        headers = ['Phase', 'MAE', 'Acc2', 'Acc5', 'Acc7', 'F1', 'Corr']
+        headers = [
+            ['phase', 'anger (wacc)', 'disgust (wacc)', 'fear (wacc)', 'happy (wacc)', 'sad (wacc)', 'surprise (wacc)', 'average'],
+            ['phase', 'anger (f1)', 'disgust (f1)', 'fear (f1)', 'happy (f1)', 'sad (f1)', 'surprise (f1)', 'average'],
+            ['phase', 'anger (auc)', 'disgust (auc)', 'fear (auc)', 'happy (auc)', 'sad (auc)', 'surprise (auc)', 'average'],
+            ['phase', 'acc', 'acc_subset', 'acc_intersect', 'auc_score']
+        ]
         for epoch in range(1, self.args['epochs'] + 1):
             print(f'=== Epoch {epoch} ===')
-            # t_mae, t_acc2, t_acc5, t_acc7, t_f1, t_corr = self.train_one_epoch()
-            # v_mae, v_acc2, v_acc5, v_acc7, v_f1, v_corr = self.eval_one_epoch()
             train_stats = self.train_one_epoch()
             valid_stats = self.eval_one_epoch()
             test_stats = self.eval_one_epoch('test')
@@ -33,40 +60,37 @@ class EmoTrainer(TrainerBase):
             self.all_valid_stats.append(valid_stats)
             self.all_test_stats.append(test_stats)
 
-            for i in range(len(valid_stats)):
-                if i == 0: # MAE
-                    if valid_stats[i] < self.best_valid_stats[i]:
-                        self.best_valid_stats[i] = valid_stats[i]
-                else:
-                    if valid_stats[i] > self.best_valid_stats[i]:
-                        self.best_valid_stats[i] = valid_stats[i]
-                        if i == 3: # Acc7
+            for i in range(len(headers)):
+                for j in range(len(valid_stats[i])):
+                    is_pivot = (i == 3 and j == 3) # auc
+                    if valid_stats[i][j] > self.best_valid_stats[i][j]:
+                        self.best_valid_stats[i][j] = valid_stats[i][j]
+                        if is_pivot:
                             self.earlyStop = self.args['early_stop']
                             self.best_epoch = epoch
                             self.best_model = copy.deepcopy(self.model.state_dict())
-                    elif i == 3: # Acc7
+                    elif is_pivot:
                         self.earlyStop -= 1
 
-            train_stats_str = self.make_stat(self.prev_train_stats, train_stats)
-            valid_stats_str = self.make_stat(self.prev_valid_stats, valid_stats)
-            test_stats_str = self.make_stat(self.prev_test_stats, test_stats)
+                train_stats_str = self.make_stat(self.prev_train_stats[i], train_stats[i])
+                valid_stats_str = self.make_stat(self.prev_valid_stats[i], valid_stats[i])
+                test_stats_str = self.make_stat(self.prev_test_stats[i], test_stats[i])
 
-            self.prev_train_stats = train_stats
-            self.prev_valid_stats = valid_stats
-            self.prev_test_stats = test_stats
+                self.prev_train_stats[i] = train_stats[i]
+                self.prev_valid_stats[i] = valid_stats[i]
+                self.prev_test_stats[i] = test_stats[i]
 
-            print(tabulate([['Train', *train_stats_str], ['Valid', *valid_stats_str], ['Test', *test_stats_str]], headers=headers))
-            print()
+                print(tabulate([['Train', *train_stats_str], ['Valid', *valid_stats_str], ['Test', *test_stats_str]], headers=headers[i]))
+                print()
 
             if self.earlyStop == 0:
                 print('Early stopping...\n')
                 break
 
         print('=== Best performance ===')
-        print(tabulate([
-            [f'BEST ({self.best_epoch})', *self.best_valid_stats],
-            [f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1]]
-        ], headers=headers))
+        print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][0]]], headers=headers[0]))
+        print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][1]]], headers=headers[1]))
+        print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][2]]], headers=headers[2]))
 
         self.save_stats()
         self.save_model()
@@ -85,29 +109,21 @@ class EmoTrainer(TrainerBase):
             X_vision = X_vision.to(device=self.device)
             Y = Y.squeeze().to(device=self.device)
 
-            print(X_text.size())
-            print(X_audio.size())
-            print(X_vision.size())
-            print(Y.size())
-
             self.optimizer.zero_grad()
             with torch.set_grad_enabled(True):
-                logits = self.model(X_text, X_audio, X_vision)
-                print(logits.size())
-                logits = logits.squeeze()
+                logits = self.model(X_text, X_audio, X_vision) # (batch_size, num_emotions), already after sigmoid/softmax
                 loss = self.criterion(logits, Y)
                 loss.backward()
                 epoch_loss += loss.item() * Y.size(0)
                 if self.args['clip'] > 0:
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args['clip'])
+                    clip_grad_norm_(self.model.parameters(), self.args['clip'])
                 self.optimizer.step()
             total_logits = torch.cat((total_logits, logits), dim=0) if total_logits is not None else logits
             total_Y = torch.cat((total_Y, Y), dim=0) if total_Y is not None else Y
 
         epoch_loss /= len(dataloader.dataset)
         print(f'train loss = {epoch_loss}')
-        # mae, acc2, acc5, acc7, f1, corr = eval_mosei_senti(logits, Y, exclude_zero=self.args['exclude_zero'])
-        return eval_mosei_senti(total_logits, total_Y, exclude_zero=self.args['exclude_zero'])
+        return eval_mosei_emo(total_logits, total_Y, self.args['threshold'], self.args['verbose'])
 
     def eval_one_epoch(self, phase='valid'):
         self.model.eval()
@@ -124,7 +140,6 @@ class EmoTrainer(TrainerBase):
 
             with torch.set_grad_enabled(False):
                 logits = self.model(X_text, X_audio, X_vision)
-                logits = logits.squeeze()
                 loss = self.criterion(logits, Y)
                 epoch_loss += loss.item() * Y.size(0)
 
@@ -137,5 +152,4 @@ class EmoTrainer(TrainerBase):
             self.scheduler.step(epoch_loss)
 
         print(f'{phase} loss = {epoch_loss}')
-        # mae, acc2, acc5, acc7, f1, corr = eval_mosei_senti(logits, Y, exclude_zero=self.args['exclude_zero'])
-        return eval_mosei_senti(total_logits, total_Y, exclude_zero=self.args['exclude_zero'])
+        return eval_mosei_emo(total_logits, total_Y, self.args['threshold'], self.args['verbose'])
