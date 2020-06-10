@@ -29,7 +29,8 @@ class TrainerBase():
         return new_stats
 
     def get_saving_file_name(self):
-        name = f"{self.args['model']}_Acc2_{self.best_valid_stats[1]}_Acc7_{self.best_valid_stats[3]}_rand{self.args['seed']}.pt"
+        best_test_stats = self.all_test_stats[self.best_epoch - 1]
+        name = f"{self.args['model']}_wacc_{best_test_stats[0][6]}_f1_{best_test_stats[1][6]}_auc_{best_test_stats[2][6]}_rand{self.args['seed']}.pt"
         if self.args['gru']:
             name = f'gru_{name}'
         return name
@@ -44,6 +45,16 @@ class TrainerBase():
         }
 
         save(stats, os.path.join(self.saving_path, 'stats', self.get_saving_file_name()))
+
+        csv_path = os.path.join(self.saving_path, 'csv', self.get_saving_file_name()).replace('.pt', '.csv')
+        dirname = os.path.dirname(csv_path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        with open(csv_path, 'w') as f:
+            for stat in self.all_test_stats[self.best_epoch - 1]:
+                for n in stat:
+                    f.write(f'{n:.4f},')
+                f.write('\n')
 
     def save_model(self):
         save(self.best_model, os.path.join(self.saving_path, 'models', self.get_saving_file_name()))
