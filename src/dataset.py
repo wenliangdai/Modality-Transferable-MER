@@ -110,6 +110,12 @@ class MOSEI(Dataset):
     def __len__(self):
         return len(self.id)
 
+    def get_pos_weight(self):
+        pos_nums = self.labels.sum(dim=0)
+        neg_nums = self.__len__() - pos_nums
+        pos_weight = neg_nums / pos_nums
+        return pos_weight
+
     def __getitem__(self, index):
         return (self.text[index], self.audio[index], self.vision[index]), self.labels[index], self.id[index]
 
