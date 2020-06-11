@@ -30,9 +30,24 @@ class TrainerBase():
 
     def get_saving_file_name(self):
         best_test_stats = self.all_test_stats[self.best_epoch - 1]
-        name = f"{self.args['model']}_wacc_{best_test_stats[0][6]:.4f}_f1_{best_test_stats[1][6]:.4f}_auc_{best_test_stats[2][6]:.4f}_ep{self.best_epoch}_rand{self.args['seed']}_{self.args['hidden_sizes']}_{self.args['modalities']}.pt"
+        # name = f"{self.args['model']}_wacc_{best_test_stats[0][6]:.4f}_f1_{best_test_stats[1][6]:.4f}_auc_{best_test_stats[2][6]:.4f}_ep{self.best_epoch}_rand{self.args['seed']}_{self.args['hidden_sizes']}_{self.args['modalities']}.pt"
+        name = f"{self.args['model']}_"
+        name += f"wacc_{best_test_stats[0][-1]:.4f}_"
+        name += f"f1_{best_test_stats[1][-1]:.4f}_"
+        name += f"auc_{best_test_stats[2][-1]:.4f}_"
+        name += f"ep{self.best_epoch}_"
+        name += f"rand{self.args['seed']}_"
+        name += f"{self.args['hidden_sizes']}_"
+        name += f"{self.args['modalities']}"
+
         if self.args['gru']:
-            name = f'gru_{name}'
+            name += '_gru'
+
+        if self.args['zsl'] != -1:
+            name += f"_zsl{self.args['zsl']}"
+
+        name += '.pt'
+
         return name
 
     def save_stats(self):
