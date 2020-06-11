@@ -107,7 +107,7 @@ class EmoTrainer(TrainerBase):
     def valid(self):
         valid_stats = self.eval_one_epoch()
         for i in range(len(self.headers)):
-            print(tabulate([['Test', *valid_stats]], headers=self.headers[i]))
+            print(tabulate([['Test', *valid_stats[i]]], headers=self.headers[i]))
             print()
         # for stat in valid_stats:
         #     for n in stat:
@@ -117,8 +117,7 @@ class EmoTrainer(TrainerBase):
     def test(self):
         test_stats = self.eval_one_epoch('test')
         for i in range(len(self.headers)):
-            test_stats_str = self.make_stat(self.prev_test_stats[i], test_stats[i])
-            print(tabulate([['Test', *test_stats_str]], headers=self.headers[i]))
+            print(tabulate([['Test', *test_stats[i]]], headers=self.headers[i]))
             print()
         for stat in test_stats:
             for n in stat:
