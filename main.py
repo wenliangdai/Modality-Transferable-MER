@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from src.cli import get_args
-from src.utils import capitalize_first_letter
+from src.utils import capitalize_first_letter, load
 from src.data import get_data, get_glove_emotion_embs
 from src.trainers.sentiment import SentiTrainer
 from src.trainers.emotion import EmoTrainer
@@ -105,6 +105,9 @@ if __name__ == "__main__":
         model = MODEL()
     elif model_type == 'eea':
         emo_list = EMOTIONS[args['dataset']]
+        zsl = args['zsl']
+        if zsl != -1:
+            emo_list = emo_list[:zsl] + emo_list[zsl + 1:]
         if args['emocap']:
             emo_list = capitalize_first_letter(emo_list)
         emo_weights = get_glove_emotion_embs(args['glove_emo_path'])
@@ -114,7 +117,7 @@ if __name__ == "__main__":
 
         MODEL = EmotionEmbAttnModel
         model = MODEL(
-            num_classes=NUM_CLASSES[args['dataset']],
+            num_classes=len(emo_list),
             input_sizes=modal_dims,
             hidden_size=args['hidden_size'],
             hidden_sizes=args['hidden_sizes'],
@@ -131,11 +134,16 @@ if __name__ == "__main__":
 
     model = model.to(device=device)
 
+    if args['ckpt'] != '':
+        state_dict = load(args['ckpt'])
+        state_dict.pop('textEmoEmbs.weight')
+        o = model.load_state_dict(state_dict, strict=False)
+
     print(model)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
 
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=args['patience'], verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=args['patience'], verbose=True)
 
     if args['loss'] == 'l1':
         criterion = torch.nn.L1Loss()
@@ -155,4 +163,10 @@ if __name__ == "__main__":
         TRAINER = EmoTrainer
 
     trainer = TRAINER(args, model, criterion, optimizer, scheduler, device, dataloaders)
-    trainer.train()
+
+    if args['test']:
+        trainer.test()
+    elif args['valid']:
+        trainer.valid()
+    else:
+        trainer.train()

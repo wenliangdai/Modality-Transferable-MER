@@ -12,13 +12,8 @@ class EmotionEmbAttnModel(nn.Module):
 
         emo_weight = torch.FloatTensor(emo_weight)
         self.textEmoEmbs = nn.Embedding.from_pretrained(emo_weight)
-        # self.textEmoEmbs.weight.requires_grad = False
-
-        # def hook(module, grad_input, grad_output):
-        #     print(module, grad_input, grad_output)
-        #     exit(1)
-        # self.textEmoEmbs.register_backward_hook(hook)
-
+        for param in self.textEmoEmbs.parameters():
+            param.requires_grad = False
 
         self.affineAudio = nn.Linear(hidden_sizes[0], hidden_sizes[1])
         self.affineVisual = nn.Linear(hidden_sizes[0], hidden_sizes[2])

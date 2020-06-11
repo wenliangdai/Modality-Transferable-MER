@@ -92,10 +92,33 @@ class MOSI(Dataset):
 
 
 class MOSEI(Dataset):
-    def __init__(self, id, text, audio, vision, labels):
+    def __init__(self, id, text, audio, vision, labels, zsl=-1):
         super(MOSEI, self).__init__()
+
+        zsl_text = []
+        zsl_audio = []
+        zsl_vision = []
+        zsl_labels = []
+        zsl_id = []
+        if zsl != -1:
+            labels = labels.tolist()
+            for i in range(len(labels)):
+                if labels[i][zsl] != 1:
+                    zsl_text.append(text[i])
+                    zsl_audio.append(audio[i])
+                    zsl_vision.append(vision[i])
+                    zsl_labels.append(labels[i][:zsl] + labels[i][zsl + 1:])
+                    zsl_id.append(id[i])
+
+            text = zsl_text
+            audio = zsl_audio
+            vision = zsl_vision
+            labels = zsl_labels
+            id = zsl_id
+
         self.vision = torch.tensor(vision, dtype=torch.float32)
-        self.labels = torch.tensor(labels.squeeze(), dtype=torch.float32)
+        self.labels = torch.tensor(labels, dtype=torch.float32)
+
         self.text = torch.tensor(text, dtype=torch.float32)
         self.audio = torch.tensor(audio, dtype=torch.float32)
         self.audio[self.audio == -np.inf] = 0

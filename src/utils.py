@@ -51,12 +51,7 @@ def get_loss_weight(labels, label_order):
     return loss_weight
 
 def capitalize_first_letter(data):
-    if type(data) == 'str':
-        return data.capitalize()
-    elif type(data) == 'list':
-        return [word.capitalize() for word in data]
-    elif type(data) == 'numpy.ndarray':
-        return np.array([word.capitalize() for word in data])
+    return [word.capitalize() for word in data]
 
 def cmumosei_round(a):
     if a < -2:

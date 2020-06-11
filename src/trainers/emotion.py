@@ -13,6 +13,18 @@ class EmoTrainer(TrainerBase):
         self.all_valid_stats = []
         self.all_test_stats = []
 
+        self.headers = [
+            ['phase', 'anger (wacc)', 'disgust (wacc)', 'fear (wacc)', 'happy (wacc)', 'sad (wacc)', 'surprise (wacc)', 'average'],
+            ['phase', 'anger (f1)', 'disgust (f1)', 'fear (f1)', 'happy (f1)', 'sad (f1)', 'surprise (f1)', 'average'],
+            ['phase', 'anger (auc)', 'disgust (auc)', 'fear (auc)', 'happy (auc)', 'sad (auc)', 'surprise (auc)', 'average'],
+            ['phase', 'acc', 'acc_subset', 'acc_intersect', 'auc_score']
+        ]
+
+        zsl = args['zsl']
+        if zsl != -1:
+            for i in range(3):
+                self.headers[i] = self.headers[i][:zsl + 1] + self.headers[i][zsl + 2:]
+
         self.prev_train_stats = [
             [-float('inf')] * (model.num_classes + 1), # single wacc
             [-float('inf')] * (model.num_classes + 1), # single f1
@@ -44,12 +56,6 @@ class EmoTrainer(TrainerBase):
         self.best_epoch = -1
 
     def train(self):
-        headers = [
-            ['phase', 'anger (wacc)', 'disgust (wacc)', 'fear (wacc)', 'happy (wacc)', 'sad (wacc)', 'surprise (wacc)', 'average'],
-            ['phase', 'anger (f1)', 'disgust (f1)', 'fear (f1)', 'happy (f1)', 'sad (f1)', 'surprise (f1)', 'average'],
-            ['phase', 'anger (auc)', 'disgust (auc)', 'fear (auc)', 'happy (auc)', 'sad (auc)', 'surprise (auc)', 'average'],
-            ['phase', 'acc', 'acc_subset', 'acc_intersect', 'auc_score']
-        ]
         for epoch in range(1, self.args['epochs'] + 1):
             print(f'=== Epoch {epoch} ===')
             train_stats = self.train_one_epoch()
@@ -60,9 +66,9 @@ class EmoTrainer(TrainerBase):
             self.all_valid_stats.append(valid_stats)
             self.all_test_stats.append(test_stats)
 
-            for i in range(len(headers)):
+            for i in range(len(self.headers)):
                 for j in range(len(valid_stats[i])):
-                    is_pivot = (i == 2 and j == 6) # auc average
+                    is_pivot = (i == 2 and j == (len(valid_stats[i]) - 1)) # auc average
                     if valid_stats[i][j] > self.best_valid_stats[i][j]:
                         self.best_valid_stats[i][j] = valid_stats[i][j]
                         if is_pivot:
@@ -80,7 +86,7 @@ class EmoTrainer(TrainerBase):
                 self.prev_valid_stats[i] = valid_stats[i]
                 self.prev_test_stats[i] = test_stats[i]
 
-                print(tabulate([['Train', *train_stats_str], ['Valid', *valid_stats_str], ['Test', *test_stats_str]], headers=headers[i]))
+                print(tabulate([['Train', *train_stats_str], ['Valid', *valid_stats_str], ['Test', *test_stats_str]], headers=self.headers[i]))
                 print()
 
             if self.earlyStop == 0:
@@ -88,15 +94,36 @@ class EmoTrainer(TrainerBase):
                 break
 
         print('=== Best performance ===')
-        print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][0]]], headers=headers[0]))
-        print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][1]]], headers=headers[1]))
-        print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][2]]], headers=headers[2]))
+        print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][0]]], headers=self.headers[0]))
+        print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][1]]], headers=self.headers[1]))
+        print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][2]]], headers=self.headers[2]))
 
         self.save_stats()
         self.save_model()
         print('Results and model are saved!')
 
         print(self.model.modality_weights.weight)
+
+    def valid(self):
+        valid_stats = self.eval_one_epoch()
+        for i in range(len(self.headers)):
+            print(tabulate([['Test', *valid_stats]], headers=self.headers[i]))
+            print()
+        # for stat in valid_stats:
+        #     for n in stat:
+        #         print(f'{n:.4f},', end='')
+        # print()
+
+    def test(self):
+        test_stats = self.eval_one_epoch('test')
+        for i in range(len(self.headers)):
+            test_stats_str = self.make_stat(self.prev_test_stats[i], test_stats[i])
+            print(tabulate([['Test', *test_stats_str]], headers=self.headers[i]))
+            print()
+        for stat in test_stats:
+            for n in stat:
+                print(f'{n:.4f},', end='')
+        print()
 
     def train_one_epoch(self):
         self.model.train()

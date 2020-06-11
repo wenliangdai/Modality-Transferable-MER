@@ -1,7 +1,7 @@
 import argparse
 
 def get_args():
-    parser = argparse.ArgumentParser(description='Test')
+    parser = argparse.ArgumentParser(description='Multi-modal emotion recognition')
 
     parser.add_argument('-lf', '--log-file', help='Log file', type=str, required=False, default='')
 
@@ -17,7 +17,7 @@ def get_args():
     parser.add_argument('-cl', '--clip', help='Use clip to gradients', type=float, required=False, default=-1.0)
     parser.add_argument('-sc', '--scheduler', help='Use scheduler to optimizer', action='store_true')
     parser.add_argument('-se', '--seed', help='Random seed', type=int, required=False, default=0)
-    parser.add_argument('-pa', '--patience', help='Patience of the scheduler', type=int, required=False, default=10)
+    parser.add_argument('-pa', '--patience', help='Patience of the scheduler', type=int, required=False, default=6)
     parser.add_argument('-ez', '--exclude-zero', help='Exclude zero in evaluation', action='store_true')
     parser.add_argument('--loss', help='loss function: l1/mse/ce', type=str, required=False, default='l1')
 
@@ -29,6 +29,9 @@ def get_args():
 
     parser.add_argument('-mod', '--modalities', help='what modalities to use', type=str, required=False, default='tav')
 
+    parser.add_argument('--valid', help='Valid mode', action='store_true')
+    parser.add_argument('--test', help='Test mode', action='store_true')
+
     # Dataset
     parser.add_argument('--dataset', type=str, default='mosei_senti', help='Dataset to use')
     parser.add_argument('--aligned', action='store_true', help='Aligned experiment or not')
@@ -37,7 +40,9 @@ def get_args():
     parser.add_argument('--glove-emo-path', type=str, default='data/glove.emotions.840B.300d.pt')
     parser.add_argument('--emocap', action='store_true', help='Capitalize the first letter of emotion words')
     parser.add_argument('--multi-level-classify', help='MOSEI emotion multi level', action='store_true')
+    parser.add_argument('--zsl', help='Do zero shot learning on which emotion (index)', type=int, required=False, default=-1)
 
+    # Checkpoint
     parser.add_argument('--ckpt', type=str, required=False, default='')
 
     # LSTM
