@@ -7,6 +7,8 @@ class EmotionEmbAttnModel(nn.Module):
         super(EmotionEmbAttnModel, self).__init__()
 
         self.num_classes = num_classes
+        self.bidirectional = bidirectional
+        self.hidden_sizes = hidden_sizes
         self.device = device
         self.modalities = modalities
 
@@ -71,6 +73,9 @@ class EmotionEmbAttnModel(nn.Module):
         scores = []
         if 't' in self.modalities:
             output_text, _ = self.RNNs[0](X_text)
+            if self.bidirectional:
+                output_text = output_text.view(output_text.size(0), output_text.size(1), 2, self.hidden_sizes[0])
+                output_text = output_text.sum(dim=2)
             output_text = output_text[:, -1, :]
             text_emo_vecs = text_emo_vecs_origin.unsqueeze(0).repeat(batch_size, 1, 1)
             text_attn_weights = self.attention(output_text, text_emo_vecs)
@@ -79,6 +84,9 @@ class EmotionEmbAttnModel(nn.Module):
 
         if 'a' in self.modalities:
             output_audio, _ = self.RNNs[1](X_audio)
+            if self.bidirectional:
+                output_audio = output_audio.view(output_audio.size(0), output_audio.size(1), 2, self.hidden_sizes[1])
+                output_audio = output_audio.sum(dim=2)
             output_audio = output_audio[:, -1, :]
             audio_emo_vecs = self.affineAudio(text_emo_vecs_origin)
             audio_emo_vecs = audio_emo_vecs.unsqueeze(0).repeat(batch_size, 1, 1)
@@ -88,6 +96,9 @@ class EmotionEmbAttnModel(nn.Module):
 
         if 'v' in self.modalities:
             output_visual, _ = self.RNNs[2](X_visual)
+            if self.bidirectional:
+                output_visual = output_visual.view(output_visual.size(0), output_visual.size(1), 2, self.hidden_sizes[2])
+                output_visual = output_visual.sum(dim=2)
             output_visual = output_visual[:, -1, :]
             visual_emo_vecs = self.affineVisual(text_emo_vecs_origin)
             visual_emo_vecs = visual_emo_vecs.unsqueeze(0).repeat(batch_size, 1, 1)
