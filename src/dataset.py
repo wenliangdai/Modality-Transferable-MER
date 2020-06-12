@@ -92,15 +92,16 @@ class MOSI(Dataset):
 
 
 class MOSEI(Dataset):
-    def __init__(self, id, text, audio, vision, labels, zsl=-1):
+    def __init__(self, id, text, audio, vision, labels, zsl=-1, fsl=-1):
         super(MOSEI, self).__init__()
 
-        zsl_text = []
-        zsl_audio = []
-        zsl_vision = []
-        zsl_labels = []
-        zsl_id = []
         if zsl != -1:
+            zsl_text = []
+            zsl_audio = []
+            zsl_vision = []
+            zsl_labels = []
+            zsl_id = []
+
             labels = labels.tolist()
             for i in range(len(labels)):
                 if labels[i][zsl] != 1:
@@ -115,6 +116,32 @@ class MOSEI(Dataset):
             vision = zsl_vision
             labels = zsl_labels
             id = zsl_id
+
+        if fsl != -1:
+            fsl_num = np.ceil(np.sum(labels, axis=0)[fsl] * 0.01)
+            counter = 0
+            fsl_text = []
+            fsl_audio = []
+            fsl_vision = []
+            fsl_labels = []
+            fsl_id = []
+            for i in range(len(labels)):
+                if labels[i][fsl] == 1:
+                    if counter <= fsl_num:
+                        counter += 1
+                    else:
+                        continue
+                fsl_text.append(text[i])
+                fsl_audio.append(audio[i])
+                fsl_vision.append(vision[i])
+                fsl_labels.append(labels[i])
+                fsl_id.append(id[i])
+
+            text = fsl_text
+            audio = fsl_audio
+            vision = fsl_vision
+            labels = fsl_labels
+            id = fsl_id
 
         self.vision = torch.tensor(vision, dtype=torch.float32)
         self.labels = torch.tensor(labels, dtype=torch.float32)

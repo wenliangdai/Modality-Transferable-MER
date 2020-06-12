@@ -43,8 +43,14 @@ class TrainerBase():
         if self.args['gru']:
             name += '_gru'
 
+        if self.args['bidirectional']:
+            name += '_bi'
+
         if self.args['zsl'] != -1:
             name += f"_zsl{self.args['zsl']}"
+
+        if self.args['fsl'] != -1:
+            name += f"_fsl{self.args['fsl']}"
 
         name += '.pt'
 

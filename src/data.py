@@ -27,9 +27,10 @@ def get_data(args, phase):
     aligned = args['aligned']
 
     zsl = args['zsl']
+    fsl = args['fsl'] if phase == 'train' else -1
 
     processed_path = f'./processed_datasets/{dataset}_{seq_len}_{phase}{"" if aligned else "_noalign"}.pt'
-    if os.path.exists(processed_path) and zsl == -1:
+    if os.path.exists(processed_path) and zsl == -1 and fsl == -1:
         print(f'Load processed dataset! - {phase}')
         return load(processed_path)
 
@@ -74,7 +75,7 @@ def get_data(args, phase):
         else:
             labels = np.array(labels > 0, np.int32)
 
-        this_dataset = MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels, zsl=zsl)
+        this_dataset = MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels, zsl=zsl, fsl=fsl)
     elif dataset == 'iemocap':
         data_path = os.path.join(file_folder, f'mosi_data{"" if aligned else "_noalign"}.pkl')
         data = load(data_path)
@@ -83,7 +84,7 @@ def get_data(args, phase):
     else:
         raise ValueError('Wrong dataset!')
 
-    if zsl == -1:
+    if zsl == -1 and fsl == -1:
         save(this_dataset, processed_path)
 
     return this_dataset
