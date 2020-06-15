@@ -20,6 +20,19 @@ class EmotionEmbAttnModel(nn.Module):
         self.affineAudio = nn.Linear(hidden_sizes[0], hidden_sizes[1])
         self.affineVisual = nn.Linear(hidden_sizes[0], hidden_sizes[2])
 
+        # self.affineAudio = nn.Sequential(
+        #     nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+        #     nn.ReLU(),
+        #     nn.Dropout(dropout),
+        #     nn.Linear(hidden_sizes[1], hidden_sizes[1])
+        # )
+        # self.affineVisual = nn.Sequential(
+        #     nn.Linear(hidden_sizes[0], hidden_sizes[2]),
+        #     nn.ReLU(),
+        #     nn.Dropout(dropout),
+        #     nn.Linear(hidden_sizes[2], hidden_sizes[2])
+        # )
+
         RnnModel = nn.GRU if gru else nn.LSTM
 
         self.RNNs = nn.ModuleList([
@@ -106,9 +119,13 @@ class EmotionEmbAttnModel(nn.Module):
             # logits = visual_attn_weights if logits is None else logits + visual_attn_weights
             scores.append(visual_attn_weights.unsqueeze(0))
 
+        if len(self.modalities) == 1:
+            return scores[0].squeeze(0)
+
         scores = torch.cat(tuple(scores), dim=0).transpose(0, 2)
         logits = self.modality_weights(scores)
         logits = logits.squeeze().t()
+
         # for i in range(len(self.modalities)):
         #     if i == 0:
         #         logits = scores[i] * self.modality_weights[i]
