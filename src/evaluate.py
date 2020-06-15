@@ -86,7 +86,8 @@ def eval_mosei_emo(preds, truths, threshold, verbose=False):
     # aucs.append(np.average(aucs))
 
     aucs = roc_auc_score(truths, preds, labels=list(range(num_emo)), average=None).tolist()
-    aucs.append(roc_auc_score(truths, preds, labels=list(range(num_emo)), average='weighted'))
+    # aucs.append(roc_auc_score(truths, preds, labels=list(range(num_emo)), average='weighted'))
+    aucs.append(np.average(aucs))
 
     preds[preds > threshold] = 1
     preds[preds <= threshold] = 0
@@ -144,23 +145,33 @@ def eval_mosei_emo(preds, truths, threshold, verbose=False):
     return accs, f1s, aucs, [acc_strict, acc_subset, acc_intersect]
 
 
-def eval_iemocap(preds, truths, single=False):
+def eval_iemocap(preds, truths):
     # emos = ["Neutral", "Happy", "Sad", "Angry"]
     '''
     preds: (bs, num_emotions)
-    truths: (bs,)
+    truths: (bs, num_emotions)
     '''
-    if single: # single means evaluating in a (one vs. all) way
-        acc = []
-        f1 = []
-        for emo_ind in range(4):
-            preds_i = np.argmax(preds[:, emo_ind], axis=-1)
-            truths_i = truths[:, emo_ind]
-            acc.append(torch.sum(truths_i == preds_i).item() / len(preds))
-            f1.append(f1_score(truths_i, preds_i, average='weighted'))
-    else:
-        preds = np.argmax(preds, axis=-1)
-        acc = torch.sum(truths == preds).item() / len(preds)
-        f1 = f1_score(truths.view(-1), preds.view(-1), average='weighted')
+
+    total = preds.size(0)
+    num_emo = preds.size(1)
+
+    preds = preds.cpu().detach()
+    truths = truths.cpu().detach()
+
+    preds_inds = np.argmax(preds, axis=-1)
+    preds = torch.zeros_like(preds)
+
+    for i in range(total):
+        preds[i, preds_inds[i]] = 1
+
+    accs = []
+    f1s = []
+    for i in range(num_emo):
+        pred_i = preds[:, i]
+        truth_i = truths[:, i]
+        acc = torch.sum(pred_i == truth_i).item() / total
+        f1 = f1_score(truth_i, pred_i, average='weighted')
+        accs.append(acc)
+        f1s.append(f1)
 
     return acc, f1
