@@ -34,7 +34,9 @@ def weighted_acc(preds, truths, verbose):
     w_acc = (tp * n / p + tn) / (2 * n)
 
     if verbose:
-        print(p, n, tp, tn)
+        fp = n - tn
+        fn = p - tp
+        print('TP=', tp, 'TN=', tn, 'FP=', fp, 'FN=', fn, 'P=', p, 'N', n)
 
     return w_acc
 
@@ -78,31 +80,36 @@ def eval_mosei_emo(preds, truths, threshold, verbose=False):
 
     # auc_score = roc_auc_score(truths.numpy(), preds.numpy())
 
-    aucs = []
-    for emo_ind in range(num_emo):
-        aucs.append(roc_auc_score(truths.numpy()[:, emo_ind], preds.numpy()[:, emo_ind]))
-    aucs.append(np.average(aucs))
+    # aucs = []
+    # for emo_ind in range(num_emo):
+    #     aucs.append(roc_auc_score(truths.numpy()[:, emo_ind], preds.numpy()[:, emo_ind]))
+    # aucs.append(np.average(aucs))
+
+    aucs = roc_auc_score(truths, preds, labels=list(range(num_emo)), average=None).tolist()
+    aucs.append(roc_auc_score(truths, preds, labels=list(range(num_emo)), average='weighted'))
 
     preds[preds > threshold] = 1
     preds[preds <= threshold] = 0
 
-    # preds_wacc = deepcopy(preds)
-    # preds_f1 = deepcopy(preds)
+    # add a new class that represents no emotion
+    # truths = torch.cat((truths, torch.zeros((total, 1))), dim=1)
+    # preds = torch.cat((preds, torch.zeros((total, 1))), dim=1)
+    # for i in range(len(truths)):
+    #     if torch.sum(turths[i]).item() == 0:
+    #         turths[i][-1] = 1
+    #     if torch.sum(preds[i]).item() == 0:
+    #         preds[i][-1] = 1
 
-    # preds_wacc[preds_wacc > threshold_wacc] = 1
-    # preds_wacc[preds_wacc <= threshold_wacc] = 0
-
-    # preds_f1[preds_f1 > threshold_f1] = 1
-    # preds_f1[preds_f1 <= threshold_f1] = 0
+    # f1s = f1_score(truths, preds, labels=list(range(num_emo)), average=None).tolist()
+    # f1s.append(f1_score(truths, preds, labels=list(range(num_emo)), average='weighted'))
 
     accs = []
     f1s = []
     for emo_ind in range(num_emo):
-        # preds_i = preds[:, emo_ind]
+        preds_i = preds[:, emo_ind]
         truths_i = truths[:, emo_ind]
-        # accs.append(torch.sum(truths_i == preds_i).item() / total)
-        accs.append(weighted_acc(preds[:, emo_ind], truths_i, verbose=verbose))
-        f1s.append(f1_score(truths_i, preds[:, emo_ind], average='weighted'))
+        accs.append(weighted_acc(preds_i, truths_i, verbose=verbose))
+        f1s.append(f1_score(truths_i, preds_i, average='weighted'))
 
     accs.append(np.average(accs))
     f1s.append(np.average(f1s))
