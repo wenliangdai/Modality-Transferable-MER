@@ -137,7 +137,9 @@ if __name__ == "__main__":
     if args['ckpt'] != '':
         state_dict = load(args['ckpt'])
         state_dict.pop('textEmoEmbs.weight')
-        o = model.load_state_dict(state_dict, strict=False)
+        if state_dict['modality_weights.weight'].size(0) != len(args['modalities']):
+            state_dict.pop('modality_weights.weight')
+        model.load_state_dict(state_dict, strict=False)
 
     print(model)
 
