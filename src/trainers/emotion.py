@@ -5,6 +5,7 @@ from tqdm import tqdm
 from tabulate import tabulate
 from src.evaluate import eval_mosei_emo
 from src.trainers.base import TrainerBase
+from src.utils import save
 
 class EmoTrainer(TrainerBase):
     def __init__(self, args, model, criterion, optimizer, scheduler, device, dataloaders):
@@ -107,7 +108,7 @@ class EmoTrainer(TrainerBase):
     def valid(self):
         valid_stats = self.eval_one_epoch()
         for i in range(len(self.headers)):
-            print(tabulate([['Test', *valid_stats[i]]], headers=self.headers[i]))
+            print(tabulate([['Valid', *valid_stats[i]]], headers=self.headers[i]))
             print()
         # for stat in valid_stats:
         #     for n in stat:
@@ -180,4 +181,8 @@ class EmoTrainer(TrainerBase):
             self.scheduler.step(epoch_loss)
 
         print(f'{phase} loss = {epoch_loss}')
+        save({
+            'total_logits': total_logits.cpu().detach().numpy(),
+            'total_Y': total_Y.cpu().detach().numpy()
+        }, './for_choose_thre2_val.pt')
         return eval_mosei_emo(total_logits, total_Y, self.args['threshold'], self.args['verbose'])
