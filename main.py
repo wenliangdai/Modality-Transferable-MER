@@ -108,7 +108,7 @@ if __name__ == "__main__":
         zsl = args['zsl']
         if zsl != -1:
             emo_list = emo_list[:zsl] + emo_list[zsl + 1:]
-        if args['emocap']:
+        if args['cap']:
             emo_list = capitalize_first_letter(emo_list)
         emo_weights = get_glove_emotion_embs(args['glove_emo_path'])
         emo_weight = []
