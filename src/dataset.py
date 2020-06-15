@@ -180,6 +180,7 @@ class IEMOCAP(Dataset):
         self.audio[self.audio == -np.inf] = 0
 
         # "Neutral", "Happy", "Sad", "Angry"
+        # Train/Valid/Test = 2717/798/938
         self.labels = torch.argmax(self.labels, dim=-1)
         self.id = id
 
