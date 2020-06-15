@@ -77,7 +77,7 @@ def get_data(args, phase):
 
         this_dataset = MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels, zsl=zsl, fsl=fsl)
     elif dataset == 'iemocap':
-        data_path = os.path.join(file_folder, f'mosi_data{"" if aligned else "_noalign"}.pkl')
+        data_path = os.path.join(file_folder, f'iemocap_data{"" if aligned else "_noalign"}.pkl')
         data = load(data_path)
         data = data[phase]
         this_dataset = IEMOCAP(list(range(len(data['labels']))), data['text'], data['audio'], data['vision'], data['labels'])
