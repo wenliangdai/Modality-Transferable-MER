@@ -7,6 +7,8 @@ class EF_RNN(nn.Module):
     def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, bidirectional=False, gru=False):
         super(EF_RNN, self).__init__()
 
+        self.num_classes = num_classes
+
         RnnModel = nn.GRU if gru else nn.LSTM
 
         self.RNN = RnnModel(
@@ -46,6 +48,8 @@ class LF_RNN(nn.Module):
     def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, bidirectional=False, gru=False):
         super(LF_RNN, self).__init__()
 
+        self.num_classes = num_classes
+
         RnnModel = nn.GRU if gru else nn.LSTM
 
         self.RNNs = nn.ModuleList([
@@ -60,7 +64,7 @@ class LF_RNN(nn.Module):
             for i, input_size in enumerate(input_sizes)
         ])
 
-        linear_in_size = hidden_size * 3
+        linear_in_size = sum(hidden_sizes)
         if bidirectional:
             linear_in_size = linear_in_size * 2
 

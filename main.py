@@ -6,7 +6,7 @@ from src.cli import get_args
 from src.utils import capitalize_first_letter, load
 from src.data import get_data, get_glove_emotion_embs
 from src.trainers.sentiment import SentiTrainer
-from src.trainers.emotion import EmoTrainer
+from src.trainers.emotion import MoseiEmoTrainer, IemocapTrainer
 from src.models import baselines # EF_LSTM, LF_LSTM, EF_LF_LSTM
 from src.models.transformers import EF_Transformer
 from src.models.mult import MULTModel
@@ -155,14 +155,15 @@ if __name__ == "__main__":
         criterion = torch.nn.CrossEntropyLoss()
     elif args['loss'] == 'bce':
         pos_weight = train_data.get_pos_weight()
-        # print(pos_weight)
         pos_weight = pos_weight.to(device)
         criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     if args['dataset'] == 'mosi' or args['dataset'] == 'mosei_senti':
         TRAINER = SentiTrainer
-    elif args['dataset'] == 'mosei_emo' or args['dataset'] == 'iemocap':
-        TRAINER = EmoTrainer
+    elif args['dataset'] == 'mosei_emo':
+        TRAINER = MoseiEmoTrainer
+    elif args['dataset'] == 'iemocap':
+        TRAINER = IemocapTrainer
 
     trainer = TRAINER(args, model, criterion, optimizer, scheduler, device, dataloaders)
 

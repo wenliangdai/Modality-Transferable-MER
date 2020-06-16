@@ -158,7 +158,7 @@ def eval_iemocap(preds, truths):
     preds = preds.cpu().detach()
     truths = truths.cpu().detach()
 
-    preds_inds = np.argmax(preds, axis=-1)
+    preds_inds = torch.argmax(preds, dim=-1)
     preds = torch.zeros_like(preds)
 
     for i in range(total):
@@ -174,4 +174,7 @@ def eval_iemocap(preds, truths):
         accs.append(acc)
         f1s.append(f1)
 
-    return acc, f1
+    accs.append(np.average(accs))
+    f1s.append(np.average(f1s))
+
+    return accs, f1s
