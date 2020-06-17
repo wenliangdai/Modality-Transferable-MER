@@ -10,6 +10,7 @@ NUM_CLASSES = {
 EMOTIONS = {
     'mosei_emo': ['anger', 'disgust', 'fear', 'happy', 'sad', 'surprise'],
     'iemocap': ['neutral', 'happy', 'sad', 'angry']
+    # 'iemocap': ['happy', 'sad', 'angry', 'neutral']
 }
 
 # input_sizes = {

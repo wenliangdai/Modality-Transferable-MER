@@ -169,7 +169,8 @@ def eval_iemocap(preds, truths):
     for i in range(num_emo):
         pred_i = preds[:, i]
         truth_i = truths[:, i]
-        acc = torch.sum(pred_i == truth_i).item() / total
+        # acc = torch.sum(pred_i == truth_i).item() / total
+        acc = accuracy_score(truth_i, pred_i)
         f1 = f1_score(truth_i, pred_i, average='weighted')
         accs.append(acc)
         f1s.append(f1)

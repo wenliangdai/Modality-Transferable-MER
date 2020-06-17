@@ -40,6 +40,7 @@ def get_args():
     parser.add_argument('--glove-emo-path', type=str, default='data/glove.emotions.840B.300d.pt')
     parser.add_argument('--cap', action='store_true', help='Capitalize the first letter of emotion words')
     parser.add_argument('--multi-level-classify', help='MOSEI emotion multi level', action='store_true')
+    parser.add_argument('--iemocap4', help='Only use 4 emtions in IEMOCAP', action='store_true')
     parser.add_argument('--zsl', help='Do zero shot learning on which emotion (index)', type=int, required=False, default=-1)
     parser.add_argument('--fsl', help='Do few shot learning on which emotion (index)', type=int, required=False, default=-1)
 

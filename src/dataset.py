@@ -179,8 +179,9 @@ class IEMOCAP(Dataset):
         self.audio = torch.tensor(audio, dtype=torch.float32)
         self.audio[self.audio == -np.inf] = 0
 
-        # "Neutral", "Happy", "Sad", "Angry"
-        # Train/Valid/Test = 2717/798/938
+        # 11: Other Anger Excited Fear Sad Surprised Frustrated Happy Neutral Disgust (unknown)
+        # 4: "Neutral", "Happy", "Sad", "Angry"
+        # Train/Valid/Test = 6373/1775/1807
         self.labels = torch.argmax(self.labels, dim=-1)
         self.id = id
 

@@ -34,7 +34,8 @@ class TrainerBase():
         name = f"{self.args['model']}_"
         name += f"wacc_{best_test_stats[0][-1]:.4f}_"
         name += f"f1_{best_test_stats[1][-1]:.4f}_"
-        name += f"auc_{best_test_stats[2][-1]:.4f}_"
+        if self.args['dataset'] == 'mosei_emo':
+            name += f"auc_{best_test_stats[2][-1]:.4f}_"
         name += f"ep{self.best_epoch}_"
         name += f"rand{self.args['seed']}_"
         name += f"{self.args['hidden_sizes']}_"
