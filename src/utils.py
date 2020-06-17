@@ -17,6 +17,14 @@ def load(filename, mode='rb'):
     file.close()
     return loaded
 
+# For python2
+def load2(path):
+    with open(path, 'rb') as f:
+        u = pickle._Unpickler(f)
+        u.encoding = 'latin1'
+        p = u.load()
+    return p
+
 def pad_sents(sents, pad_token):
     sents_padded = []
     lens = get_lens(sents)
