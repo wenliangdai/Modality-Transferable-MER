@@ -3,7 +3,7 @@ import torch
 from torch.nn.utils import clip_grad_norm_
 from tqdm import tqdm
 from tabulate import tabulate
-from src.evaluate import eval_mosei_emo
+from src.evaluate import eval_mosei_emo, eval_iemocap
 from src.trainers.base import TrainerBase
 from src.utils import save
 
@@ -272,8 +272,8 @@ class IemocapTrainer(TrainerBase):
         self.save_stats()
         self.save_model()
         print('Results and model are saved!')
-        if self.args['verbose']:
-            print(self.model.modality_weights.weight)
+        # if self.args['verbose']:
+        print(self.model.modality_weights.weight)
 
     def valid(self):
         valid_stats = self.eval_one_epoch()
@@ -310,8 +310,9 @@ class IemocapTrainer(TrainerBase):
 
             self.optimizer.zero_grad()
             with torch.set_grad_enabled(True):
-                logits = self.model(X_text, X_audio, X_vision) # (batch_size, num_emotions), already after sigmoid/softmax
+                logits = self.model(X_text, X_audio, X_vision) # (batch_size, num_classes)
                 loss = self.criterion(logits, torch.argmax(Y, dim=-1))
+                # loss = self.criterion(logits.view(-1, 2), Y.view(-1))
                 loss.backward()
                 epoch_loss += loss.item() * Y.size(0)
                 if self.args['clip'] > 0:
@@ -322,7 +323,7 @@ class IemocapTrainer(TrainerBase):
 
         epoch_loss /= len(dataloader.dataset)
         print(f'train loss = {epoch_loss}')
-        return eval_mosei_emo(total_logits, total_Y, self.args['threshold'], self.args['verbose'])
+        return eval_iemocap(total_logits, total_Y)
 
     def eval_one_epoch(self, phase='valid'):
         self.model.eval()
@@ -355,4 +356,4 @@ class IemocapTrainer(TrainerBase):
         #     'total_logits': total_logits.cpu().detach().numpy(),
         #     'total_Y': total_Y.cpu().detach().numpy()
         # }, './for_choose_thre2_val.pt')
-        return eval_mosei_emo(total_logits, total_Y, self.args['threshold'], self.args['verbose'])
+        return eval_iemocap(total_logits, total_Y)
