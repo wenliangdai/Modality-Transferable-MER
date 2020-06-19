@@ -51,6 +51,12 @@ class TrainerBase():
 
         if self.args['fsl'] != -1:
             name += f"_fsl{self.args['fsl']}"
+        
+        if self.args['fsl2'] != -1:
+            name += f"_fsl{self.args['fsl2']}"
+        
+        if self.args['gem']:
+            name += f"_gem"
 
         name += '.pt'
 

@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 
 class EmotionEmbAttnModel(nn.Module):
-    def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, emo_weight, device, bidirectional=False, modalities='tav', gru=False):
+    def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, emo_weight, device, bidirectional=False, modalities='tav', gru=False, ft_emo_weight=None, ft_num_classes=None):
         super(EmotionEmbAttnModel, self).__init__()
 
         self.num_classes = num_classes
@@ -16,6 +16,13 @@ class EmotionEmbAttnModel(nn.Module):
         self.textEmoEmbs = nn.Embedding.from_pretrained(emo_weight)
         for param in self.textEmoEmbs.parameters():
             param.requires_grad = False
+        
+        if ft_emo_weight is not None:
+            self.ft_num_classes = ft_num_classes
+            ft_emo_weight = torch.FloatTensor(ft_emo_weight)
+            self.ft_textEmoEmbs = nn.Embedding.from_pretrained(ft_emo_weight)
+            for param in self.ft_textEmoEmbs.parameters():
+                param.requires_grad = False
 
         self.affineAudio = nn.Linear(hidden_sizes[0], hidden_sizes[1])
         self.affineVisual = nn.Linear(hidden_sizes[0], hidden_sizes[2])
@@ -77,11 +84,14 @@ class EmotionEmbAttnModel(nn.Module):
         # return res
         return attn_weights.squeeze(-1)
 
-    def forward(self, X_text, X_audio, X_visual):
+    def forward(self, X_text, X_audio, X_visual, oneemotionless=False):
         # TODO: try residual connection
 
         batch_size = X_text.size(0)
-        text_emo_vecs_origin = self.textEmoEmbs(torch.LongTensor(list(range(self.num_classes))).to(self.device))
+        if oneemotionless:
+            text_emo_vecs_origin = self.textEmoEmbs(torch.LongTensor(list(range(self.num_classes))).to(self.device))
+        else:
+            text_emo_vecs_origin = self.ft_textEmoEmbs(torch.LongTensor(list(range(self.ft_num_classes))).to(self.device))
         logits = None
         scores = []
         if 't' in self.modalities:

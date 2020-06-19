@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from src.cli import get_args
-from src.utils import capitalize_first_letter, load
+from src.utils import capitalize_first_letter, load, batch_generator
 from src.data import get_data, get_glove_emotion_embs
 from src.trainers.sentiment import SentiTrainer
 from src.trainers.emotion import MoseiEmoTrainer, IemocapTrainer
@@ -40,42 +40,32 @@ if __name__ == "__main__":
 
     print("Start loading the data....")
 
-    if args["fsl2"] == -1:
-        train_data = get_data(args, 'train')
-        valid_data = get_data(args, 'valid')
-        test_data = get_data(args, 'test')
-        train_loader = DataLoader(train_data, batch_size=args['batch_size'], shuffle=True) # , sampler=ImbalancedDatasetSampler(train_data)
-        valid_loader = DataLoader(valid_data, batch_size=args['batch_size'], shuffle=False)
-        test_loader = DataLoader(test_data, batch_size=args['batch_size'], shuffle=False)
-        print(f'Train samples = {len(train_loader.dataset)}')
-        print(f'Valid samples = {len(valid_loader.dataset)}')
-        print(f'Test samples = {len(test_loader.dataset)}')
-    else:
-        _, fsl_train_data = get_data(args, 'train')
-        all_valid_data = get_data(args, 'valid')
-        all_test_data = get_data(args, 'test')
-        
-        fsl_train_loader = DataLoader(fsl_train_data, batch_size=args['batch_size'], shuffle=True)
-        fsl_valid_loader = DataLoader(all_valid_data, batch_size=args['batch_size'], shuffle=False)
-        fsl_test_loader = DataLoader(all_test_data, batch_size=args['batch_size'], shuffle=False)
-        print(f'Train samples = {len(fsl_train_loader.dataset)}')
-        print(f'Valid samples = {len(fsl_valid_loader.dataset)}')
-        print(f'Test samples = {len(fsl_test_loader.dataset)}')
-
-    if args['fsl2'] == -1:
-        dataloaders = {
-            'train': train_loader,
-            'valid': valid_loader,
-            'test': test_loader
-        }
-    else:
-        fsl_dataloaders = {
-            'train': fsl_train_loader,
-            'valid': fsl_valid_loader,
-            'test': fsl_test_loader
-        }
+    train_data, fsl_train_data = get_data(args, 'train')
     
-    modal_dims = list(train_data.get_dim()) if args['fsl2'] == -1 else list(fsl_train_data.get_dim())
+    args['zsl'] = -1    # to generate all emotions
+    all_valid_data = get_data(args, 'valid')
+    all_test_data = get_data(args, 'test')
+    
+    train_loader = DataLoader(train_data, batch_size=5120, shuffle=True)
+    train_data_generator = batch_generator(train_loader)
+
+    fsl_train_loader = DataLoader(fsl_train_data, batch_size=args['batch_size'], shuffle=True)
+    fsl_valid_loader = DataLoader(all_valid_data, batch_size=args['batch_size'], shuffle=False)
+    fsl_test_loader = DataLoader(all_test_data, batch_size=args['batch_size'], shuffle=False)
+    print(f'Train samples = {len(train_loader.dataset)}')
+    print(f'FT Train samples = {len(fsl_train_loader.dataset)}')
+    print(f'Valid samples = {len(fsl_valid_loader.dataset)}')
+    print(f'Test samples = {len(fsl_test_loader.dataset)}')
+
+    
+    dataloaders = {
+        'train': train_data_generator,
+        'ft_train': fsl_train_loader,
+        'valid': fsl_valid_loader,
+        'test': fsl_test_loader
+    }
+    
+    modal_dims = list(train_data.get_dim())
 
     model_type = args['model'].lower()
     fusion_type = args['fusion'].lower()
@@ -121,16 +111,19 @@ if __name__ == "__main__":
 
         model = MODEL()
     elif model_type == 'eea':
-        emo_list = EMOTIONS[args['dataset']]
-        zsl = args['zsl']
-        if zsl != -1:
-            emo_list = emo_list[:zsl] + emo_list[zsl + 1:]
+        ft_emo_list = EMOTIONS[args['dataset']]
+        fsl2 = args['fsl2']
+        emo_list = ft_emo_list[:fsl2] + ft_emo_list[fsl2 + 1:]
         if args['cap']:
             emo_list = capitalize_first_letter(emo_list)
+            ft_emo_list = capitalize_first_letter(ft_emo_list)
         emo_weights = get_glove_emotion_embs(args['glove_emo_path'])
         emo_weight = []
+        ft_emo_weight = []
         for emo in emo_list:
             emo_weight.append(emo_weights[emo])
+        for emo in ft_emo_list:
+            ft_emo_weight.append(emo_weights[emo])
 
         MODEL = EmotionEmbAttnModel
         model = MODEL(
@@ -144,7 +137,9 @@ if __name__ == "__main__":
             modalities=args['modalities'],
             device=device,
             emo_weight=emo_weight,
-            gru=args['gru']
+            gru=args['gru'],
+            ft_emo_weight=ft_emo_weight,
+            ft_num_classes=len(ft_emo_list)
         )
     else:
         raise ValueError('Wrong model!')
@@ -172,9 +167,13 @@ if __name__ == "__main__":
     elif args['loss'] == 'ce':
         criterion = torch.nn.CrossEntropyLoss()
     elif args['loss'] == 'bce':
-        pos_weight = train_data.get_pos_weight() if args["fsl2"] == -1 else fsl_train_data.get_pos_weight()
-        pos_weight = pos_weight.to(device)
-        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        fsl_pos_weight = fsl_train_data.get_pos_weight()
+        fsl_pos_weight = fsl_pos_weight.to(device)
+        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=fsl_pos_weight)
+
+        train_pos_weight = train_data.get_pos_weight()
+        train_pos_weight = train_pos_weight.to(device)
+        criterion2 = torch.nn.BCEWithLogitsLoss(pos_weight=train_pos_weight)
 
     if args['dataset'] == 'mosi' or args['dataset'] == 'mosei_senti':
         TRAINER = SentiTrainer
@@ -183,15 +182,6 @@ if __name__ == "__main__":
     elif args['dataset'] == 'iemocap':
         TRAINER = IemocapTrainer
 
-    if args['fsl2'] == -1:
-        trainer = TRAINER(args, model, criterion, optimizer, scheduler, device, dataloaders)
-    else:
-        trainer = TRAINER(args, model, criterion, optimizer, scheduler, device, fsl_dataloaders)
+    trainer = TRAINER(args, model, criterion, optimizer, scheduler, device, dataloaders, criterion2=criterion2)
 
-    if args['test']:
-        trainer.test()
-    elif args['valid']:
-        trainer.valid()
-    else:
-        trainer.train()
-        
+    trainer.train()

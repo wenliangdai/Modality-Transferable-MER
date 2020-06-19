@@ -170,6 +170,74 @@ class MOSEI(Dataset):
         return (self.text[index], self.audio[index], self.vision[index]), self.labels[index], self.id[index]
 
 
+class MOSEI_FSL(Dataset):
+    def __init__(self, id, text, audio, vision, labels, fsl):
+        super(MOSEI_FSL, self).__init__()
+
+        fsl_num = np.ceil(np.sum(labels, axis=0)[fsl] * 0.01)
+        counter_positive = 0
+        counter_negative = 0
+        fsl_text = []
+        fsl_audio = []
+        fsl_vision = []
+        fsl_labels = []
+        fsl_id = []
+        for i in range(len(labels)):
+            if labels[i][fsl] == 1:
+                if counter_positive <= fsl_num:
+                    counter_positive += 1
+                else:
+                    continue
+            else:
+                if counter_negative <= fsl_num:
+                    counter_negative += 1
+                else:
+                    continue
+            fsl_text.append(text[i])
+            fsl_audio.append(audio[i])
+            fsl_vision.append(vision[i])
+            fsl_labels.append(labels[i])
+            fsl_id.append(id[i])
+
+            if counter_positive > fsl_num and counter_negative > fsl_num:
+                break
+        
+        text = fsl_text
+        audio = fsl_audio
+        vision = fsl_vision
+        labels = fsl_labels
+        id = fsl_id
+        
+        assert len(text) == len(audio) == len(vision) == len(labels) == len(id)
+        print("data samples:", len(text))
+
+        self.vision = torch.tensor(vision, dtype=torch.float32)
+        self.labels = torch.tensor(labels, dtype=torch.float32)
+
+        self.text = torch.tensor(text, dtype=torch.float32)
+        self.audio = torch.tensor(audio, dtype=torch.float32)
+        self.audio[self.audio == -np.inf] = 0
+        self.id = id
+
+    def get_seq_len(self):
+        return self.text.shape[1], self.audio.shape[1], self.vision.shape[1]
+
+    def get_dim(self):
+        return self.text.shape[2], self.audio.shape[2], self.vision.shape[2]
+
+    def __len__(self):
+        return len(self.id)
+
+    def get_pos_weight(self):
+        pos_nums = self.labels.sum(dim=0)
+        neg_nums = self.__len__() - pos_nums
+        pos_weight = neg_nums / pos_nums
+        return pos_weight
+
+    def __getitem__(self, index):
+        return (self.text[index], self.audio[index], self.vision[index]), self.labels[index], self.id[index]
+
+
 class IEMOCAP(Dataset):
     def __init__(self, id, text, audio, vision, labels):
         super(IEMOCAP, self).__init__()

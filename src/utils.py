@@ -70,6 +70,11 @@ def cmumosei_round(a):
         res = 3
     return res
 
+def batch_generator(dataloader):
+    while True:
+        for data_sample in dataloader:
+            yield data_sample
+
 
 # if __name__ == '__main__':
 #     from tqdm import tqdm

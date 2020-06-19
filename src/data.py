@@ -3,7 +3,7 @@ import pickle
 import h5py
 import numpy as np
 # from src.dataset import Multimodal_Datasets
-from src.dataset import MOSI, MOSEI, IEMOCAP
+from src.dataset import MOSI, MOSEI, MOSEI_FSL, IEMOCAP
 from src.utils import save, load, cmumosei_round
 
 # def get_data(args, split='train'):
@@ -28,9 +28,10 @@ def get_data(args, phase):
 
     zsl = args['zsl']
     fsl = args['fsl'] if phase == 'train' else -1
+    fsl2 = args['fsl2'] if phase == 'train' else -1
 
     processed_path = f'./processed_datasets/{dataset}_{seq_len}_{phase}{"" if aligned else "_noalign"}.pt'
-    if os.path.exists(processed_path) and zsl == -1 and fsl == -1:
+    if os.path.exists(processed_path) and zsl == -1 and fsl == -1 and fsl2 == -1:
         print(f'Load processed dataset! - {phase}')
         return load(processed_path)
 
@@ -76,6 +77,9 @@ def get_data(args, phase):
             labels = np.array(labels > 0, np.int32)
 
         this_dataset = MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels, zsl=zsl, fsl=fsl)
+        if phase == "train" and fsl2 != -1:
+            fsl2_dataset = MOSEI_FSL(list(range(len(labels))), text_data, audio_data, vision_data, labels, fsl2)
+
     elif dataset == 'iemocap':
         data_path = os.path.join(file_folder, f'iemocap_data{"" if aligned else "_noalign"}.pkl')
         data = load(data_path)
@@ -87,7 +91,10 @@ def get_data(args, phase):
     if zsl == -1 and fsl == -1:
         save(this_dataset, processed_path)
 
-    return this_dataset
+    if fsl2 == -1:
+        return this_dataset
+    else:
+        return this_dataset, fsl2_dataset
 
 def get_glove_emotion_embs(path):
     dataDict = load(path)
