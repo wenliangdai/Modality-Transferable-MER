@@ -43,9 +43,9 @@ def get_args():
     parser.add_argument('--zsl', help='Do zero shot learning on which emotion (index)', type=int, required=False, default=-1)
     parser.add_argument('--fsl', help='Do few shot learning on which emotion (index) joint train few-shot', type=int, required=False, default=-1)
     parser.add_argument('--fsl2', help='Do few shot learning on which emotion (index) fine-tuning few-shot', type=int, required=False, default=-1)
-    parser.add_argument('--gem', help='Test mode', action='store_true')
+    parser.add_argument('--gem', help='use continual learning gem', action='store_true')
     parser.add_argument('--margin', type=float, required=False, default=0.01)
-
+    parser.add_argument('--joint', help='joint train', action='store_true')
 
     # Checkpoint
     parser.add_argument('--ckpt', type=str, required=False, default='')

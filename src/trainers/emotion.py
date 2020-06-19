@@ -28,30 +28,30 @@ class MoseiEmoTrainer(TrainerBase):
                 self.headers[i] = self.headers[i][:zsl + 1] + self.headers[i][zsl + 2:]
 
         self.prev_train_stats = [
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single wacc
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single f1
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single auc
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single wacc
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single auc
             [-float('inf')] * 3 # acc all
         ]
 
         self.prev_valid_stats = [
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single wacc
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single f1
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single auc
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single wacc
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single auc
             [-float('inf')] * 3 # acc all
         ]
 
         self.prev_test_stats = [
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single wacc
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single f1
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single auc
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single wacc
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single auc
             [-float('inf')] * 3 # acc all
         ]
 
         self.best_valid_stats = [
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single wacc
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single f1
-            [-float('inf')] * (model.num_classes + 2 if args['gem'] else model.num_classes + 1), # single auc
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single wacc
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 2 if args['gem'] or args['joint'] else model.num_classes + 1), # single auc
             [-float('inf')] * 3 # acc all
         ]
 
@@ -64,13 +64,13 @@ class MoseiEmoTrainer(TrainerBase):
                 self.grad_dims_model.append(p.data.numel())
             self.grads_model = torch.Tensor(sum(self.grad_dims_model), n_tasks)
             self.grads_model = self.grads_model.to(device=self.device)
-
+        if criterion2 is not None:
             self.criterion2 = criterion2
 
     def train(self):
         for epoch in range(1, self.args['epochs'] + 1):
             print(f'=== Epoch {epoch} ===')
-            if self.args['gem']:
+            if self.args['gem'] or self.args['joint']:
                 train_stats = self.ft_one_epoch()
             else:
                 train_stats = self.train_one_epoch()
@@ -193,24 +193,35 @@ class MoseiEmoTrainer(TrainerBase):
                 Y_ori = Y_ori.squeeze().to(device=self.device)
                 logits_ori = self.model(X_text_ori, X_audio_ori, X_vision_ori, oneemotionless=True)
                 loss_ori = self.criterion2(logits_ori, Y_ori)
-                loss_ori.backward()
-                store_grad(self.model.parameters, self.grads_model, self.grad_dims_model, task_id=0)
+                if self.args['gem']:
+                    loss_ori.backward()
+                    store_grad(self.model.parameters, self.grads_model, self.grad_dims_model, task_id=0)
+                else:
+                    loss_ori.backward(retain_graph=True)
+                    if self.args['clip'] > 0:
+                        clip_grad_norm_(self.model.parameters(), self.args['clip'])
+                    self.optimizer.step()
                 
                 # ft data samples
                 self.optimizer.zero_grad()
                 logits = self.model(X_text, X_audio, X_vision) # (batch_size, num_emotions), already after sigmoid/softmax
                 loss = self.criterion(logits, Y)
-                loss.backward()
-                store_grad(self.model.parameters, self.grads_model, self.grad_dims_model, task_id=1)
-                epoch_loss += loss.item() * Y.size(0)
-
-                dotp = torch.mm(self.grads_model[:, 1].unsqueeze(0), self.grads_model[:, 0].unsqueeze(1))
-                if (dotp < 0).sum() != 0:
-                    project2cone2(self.grads_model[:, 1].unsqueeze(1), self.grads_model[:, 0].unsqueeze(1), margin=self.args['margin'])
-                    overwrite_grad(self.model.parameters, self.grads_model[:, 1], self.grad_dims_model)
+                if self.args['gem']:
+                    loss.backward()
+                    store_grad(self.model.parameters, self.grads_model, self.grad_dims_model, task_id=1)
+                    dotp = torch.mm(self.grads_model[:, 1].unsqueeze(0), self.grads_model[:, 0].unsqueeze(1))
+                    if (dotp < 0).sum() != 0:
+                        project2cone2(self.grads_model[:, 1].unsqueeze(1), self.grads_model[:, 0].unsqueeze(1), margin=self.args['margin'])
+                        overwrite_grad(self.model.parameters, self.grads_model[:, 1], self.grad_dims_model)
+                    else:
+                        print('Constraints are inconsistent, no solution. Do not use QP in this iteration')
+                    self.optimize_gem()
                 else:
-                    print('Constraints are inconsistent, no solution. Do not use QP in this iteration')
-                self.optimize_gem()
+                    loss.backward(retain_graph=True)
+                    if self.args['clip'] > 0:
+                        clip_grad_norm_(self.model.parameters(), self.args['clip'])
+                    self.optimizer.step()
+                epoch_loss += loss.item() * Y.size(0)
 
             total_logits = torch.cat((total_logits, logits), dim=0) if total_logits is not None else logits
             total_Y = torch.cat((total_Y, Y), dim=0) if total_Y is not None else Y

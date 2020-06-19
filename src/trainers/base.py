@@ -57,6 +57,9 @@ class TrainerBase():
         
         if self.args['gem']:
             name += f"_gem"
+        
+        if self.args['joint']:
+            name += f"_joint"
 
         name += '.pt'
 
