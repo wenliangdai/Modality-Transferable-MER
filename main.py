@@ -1,4 +1,5 @@
 import os
+import copy
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
@@ -82,8 +83,13 @@ if __name__ == "__main__":
         else:
             raise ValueError('Wrong fusion!')
 
+        num_classes = NUM_CLASSES[args['dataset']]
+
+        if args['zsl'] != -1:
+            num_classes -= 1
+
         model = MODEL(
-            num_classes=NUM_CLASSES[args['dataset']],
+            num_classes=num_classes,
             input_sizes=modal_dims,
             hidden_size=args['hidden_size'],
             hidden_sizes=args['hidden_sizes'],
@@ -104,17 +110,23 @@ if __name__ == "__main__":
 
         model = MODEL()
     elif model_type == 'eea':
-        emo_list = EMOTIONS[args['dataset']]
         zsl = args['zsl']
+        emo_list = EMOTIONS[args['dataset']]
         if zsl != -1:
-            emo_list = emo_list[:zsl] + emo_list[zsl + 1:]
+            if args['dataset'] == 'iemocap':
+                emo_list.append(EMOTIONS['iemocap9'][zsl])
+            else:
+                emo_list = emo_list[:zsl] + emo_list[zsl + 1:]
+
         if args['cap']:
             emo_list = capitalize_first_letter(emo_list)
+
         emo_weights = get_glove_emotion_embs(args['glove_emo_path'])
         emo_weight = []
         for emo in emo_list:
             emo_weight.append(emo_weights[emo])
 
+        print(emo_list)
         MODEL = EmotionEmbAttnModel
         model = MODEL(
             num_classes=len(emo_list),
@@ -136,14 +148,35 @@ if __name__ == "__main__":
 
     if args['ckpt'] != '':
         state_dict = load(args['ckpt'])
-        state_dict.pop('textEmoEmbs.weight')
-        if state_dict['modality_weights.weight'].size(0) != len(args['modalities']):
-            state_dict.pop('modality_weights.weight')
+        if args['model'] == 'eea':
+            state_dict.pop('textEmoEmbs.weight')
+            if state_dict['modality_weights.weight'].size(0) != len(args['modalities']):
+                state_dict.pop('modality_weights.weight')
+        if args['model'] == 'rnn':
+            if args['zsl_test'] != -1:
+                out_weight = copy.deepcopy(model.out.weight)
+                out_bias = copy.deepcopy(model.out.bias)
+                pretrained_out_weight = state_dict['out.weight']
+                pretrained_out_bias = state_dict['out.bias']
+                indicator = 0
+                for i in range(len(model.out.weight)):
+                    if i == args['zsl_test']:
+                        indicator = 1
+                        continue
+                    out_weight[i] = pretrained_out_weight[i - indicator]
+                    out_bias[i] = pretrained_out_bias[i - indicator]
+                model.out.weight = torch.nn.Parameter(out_weight)
+                model.out.bias = torch.nn.Parameter(out_bias)
+            state_dict.pop('out.weight')
+            state_dict.pop('out.bias')
         model.load_state_dict(state_dict, strict=False)
 
     print(model)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
+    if args['optim'] == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
+    elif args['optim'] == 'sgd':
+        optimizer = torch.optim.SGD(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=args['patience'], verbose=True)
 
@@ -152,11 +185,13 @@ if __name__ == "__main__":
     elif args['loss'] == 'mse':
         criterion = torch.nn.MSELoss()
     elif args['loss'] == 'ce':
+        # weight=torch.tensor([0.35112256, 0.12440191, 0.25395657, 0.27051895]).to(device)
         criterion = torch.nn.CrossEntropyLoss()
     elif args['loss'] == 'bce':
         pos_weight = train_data.get_pos_weight()
         pos_weight = pos_weight.to(device)
         criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        # criterion = torch.nn.BCEWithLogitsLoss()
 
     if args['dataset'] == 'mosi' or args['dataset'] == 'mosei_senti':
         TRAINER = SentiTrainer

@@ -158,11 +158,51 @@ def eval_iemocap(preds, truths):
     preds = preds.cpu().detach()
     truths = truths.cpu().detach()
 
-    preds_inds = torch.argmax(preds, dim=-1)
-    preds = torch.zeros_like(preds)
+    preds = torch.sigmoid(preds)
 
-    for i in range(total):
-        preds[i, preds_inds[i]] = 1
+    temp1 = []
+    temp2 = []
+    for i, truth in enumerate(truths):
+        if truth[-1] == 1:
+            temp1.append(preds[i].tolist())
+            # print(preds[i])
+        else:
+            temp2.append(preds[i].tolist())
+            # print(preds[i])
+    # print(temp2)
+    print(np.mean(temp1,0))
+    print(np.mean(temp2,0))
+
+    # zsl: 0.5 0.5 0.3
+    th = [0.5, 0.55, 0.55, 0.95]
+    for i in range(len(th)):
+        pred = preds[:, i]
+        pred[pred > th[i]] = 1
+        pred[pred <= th[i]] = 0
+        preds[:, i] = pred
+
+    # preds[0][preds[0] > 0.7] = 1
+    # preds[0][preds[0] <= 0.7] = 0
+
+    # preds[1][preds[1] > 0.5] = 1
+    # preds[1][preds[1] <= 0.5] = 0
+
+    # preds[2][preds[2] > 0.5] = 1
+    # preds[2][preds[2] <= 0.5] = 0
+
+    # preds[3][preds[3] > 0.5] = 1
+    # preds[3][preds[3] <= 0.5] = 0
+
+    # preds_inds = torch.argmax(preds, dim=-1)
+    # preds = torch.zeros_like(preds)
+
+    # for i in range(total):
+    #     preds[i, preds_inds[i]] = 1
+
+    # print(preds)
+    # print(truths)
+
+    # truths = truths.to(torch.int32)
 
     accs = []
     f1s = []
@@ -170,7 +210,10 @@ def eval_iemocap(preds, truths):
         pred_i = preds[:, i]
         truth_i = truths[:, i]
         # acc = torch.sum(pred_i == truth_i).item() / total
+
+        acc = weighted_acc(pred_i, truth_i, True)
         acc = accuracy_score(truth_i, pred_i)
+
         f1 = f1_score(truth_i, pred_i, average='weighted')
         accs.append(acc)
         f1s.append(f1)

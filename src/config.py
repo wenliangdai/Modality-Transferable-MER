@@ -9,7 +9,8 @@ NUM_CLASSES = {
 
 EMOTIONS = {
     'mosei_emo': ['anger', 'disgust', 'fear', 'happy', 'sad', 'surprise'],
-    'iemocap': ['neutral', 'happy', 'sad', 'angry']
+    'iemocap': ['neutral', 'happy', 'sad', 'angry'],
+    'iemocap9': ['angry', 'exciting', 'fear', 'sad', 'surprising', 'frustrating', 'happy', 'neutral', 'disgust']
     # 'iemocap': ['happy', 'sad', 'angry', 'neutral']
 }
 

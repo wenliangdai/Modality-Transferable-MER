@@ -32,6 +32,8 @@ class TrainerBase():
         best_test_stats = self.all_test_stats[self.best_epoch - 1]
         # name = f"{self.args['model']}_wacc_{best_test_stats[0][6]:.4f}_f1_{best_test_stats[1][6]:.4f}_auc_{best_test_stats[2][6]:.4f}_ep{self.best_epoch}_rand{self.args['seed']}_{self.args['hidden_sizes']}_{self.args['modalities']}.pt"
         name = f"{self.args['model']}_"
+        if self.args['model'] == 'rnn':
+            name += f"{self.args['fusion']}_"
         name += f"wacc_{best_test_stats[0][-1]:.4f}_"
         name += f"f1_{best_test_stats[1][-1]:.4f}_"
         if self.args['dataset'] == 'mosei_emo':

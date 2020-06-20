@@ -19,7 +19,8 @@ def get_args():
     parser.add_argument('-se', '--seed', help='Random seed', type=int, required=False, default=0)
     parser.add_argument('-pa', '--patience', help='Patience of the scheduler', type=int, required=False, default=6)
     parser.add_argument('-ez', '--exclude-zero', help='Exclude zero in evaluation', action='store_true')
-    parser.add_argument('--loss', help='loss function: l1/mse/ce', type=str, required=False, default='l1')
+    parser.add_argument('--loss', help='loss function: l1/mse/ce/bce', type=str, required=False, default='l1')
+    parser.add_argument('--optim', help='optimizer function: adam/sgd', type=str, required=False, default='adam')
 
     parser.add_argument('--threshold', help='Threshold of for multi-label emotion recognition', type=float, required=False, default=0.5)
     # parser.add_argument('--threshold-wacc', help='Threshold of weighted accuracy for multi-label emotion recognition', type=float, required=False, default=0.2)
@@ -41,7 +42,9 @@ def get_args():
     parser.add_argument('--cap', action='store_true', help='Capitalize the first letter of emotion words')
     parser.add_argument('--multi-level-classify', help='MOSEI emotion multi level', action='store_true')
     parser.add_argument('--iemocap4', help='Only use 4 emtions in IEMOCAP', action='store_true')
+    parser.add_argument('--iemocap9', help='Only use 9 emtions in IEMOCAP', action='store_true')
     parser.add_argument('--zsl', help='Do zero shot learning on which emotion (index)', type=int, required=False, default=-1)
+    parser.add_argument('--zsl-test', help='Notify which emotion was zsl before', type=int, required=False, default=-1)
     parser.add_argument('--fsl', help='Do few shot learning on which emotion (index)', type=int, required=False, default=-1)
 
     # Checkpoint

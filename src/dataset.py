@@ -171,18 +171,41 @@ class MOSEI(Dataset):
 
 
 class IEMOCAP(Dataset):
-    def __init__(self, id, text, audio, vision, labels):
+    def __init__(self, id, text, audio, vision, labels, zsl=-1):
         super(IEMOCAP, self).__init__()
+
+        # if zsl != -1:
+        #     zsl_text = []
+        #     zsl_audio = []
+        #     zsl_vision = []
+        #     zsl_labels = []
+        #     zsl_id = []
+
+        #     labels = labels.tolist()
+        #     for i in range(len(labels)):
+        #         if labels[i][zsl] != 1:
+        #             zsl_text.append(text[i])
+        #             zsl_audio.append(audio[i])
+        #             zsl_vision.append(vision[i])
+        #             zsl_labels.append(labels[i][:zsl] + labels[i][zsl + 1:])
+        #             zsl_id.append(id[i])
+
+        #     text = zsl_text
+        #     audio = zsl_audio
+        #     vision = zsl_vision
+        #     labels = zsl_labels
+        #     id = zsl_id
+
         self.vision = torch.tensor(vision, dtype=torch.float32)
-        self.labels = torch.tensor(labels, dtype=torch.int32)
+        self.labels = torch.tensor(labels, dtype=torch.float32)
         self.text = torch.tensor(text, dtype=torch.float32)
         self.audio = torch.tensor(audio, dtype=torch.float32)
         self.audio[self.audio == -np.inf] = 0
 
         # 11: Other Anger Excited Fear Sad Surprised Frustrated Happy Neutral Disgust (unknown)
+        # 9: Anger Excited Fear Sad Surprised Frustrated Happy Neutral Disgust
         # 4: "Neutral", "Happy", "Sad", "Angry"
         # Train/Valid/Test = 6373/1775/1807
-        self.labels = torch.argmax(self.labels, dim=-1)
         self.id = id
 
     def get_seq_len(self):
@@ -190,6 +213,12 @@ class IEMOCAP(Dataset):
 
     def get_dim(self):
         return self.text.shape[2], self.audio.shape[2], self.vision.shape[2]
+
+    def get_pos_weight(self):
+        pos_nums = self.labels.sum(dim=0)
+        neg_nums = self.__len__() - pos_nums
+        pos_weight = neg_nums / pos_nums
+        return pos_weight
 
     def __len__(self):
         return len(self.id)

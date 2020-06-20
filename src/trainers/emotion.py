@@ -69,7 +69,7 @@ class MoseiEmoTrainer(TrainerBase):
 
             for i in range(len(self.headers)):
                 for j in range(len(valid_stats[i])):
-                    is_pivot = (i == 2 and j == (len(valid_stats[i]) - 1)) # auc average
+                    is_pivot = (i == 0 and j == (len(valid_stats[i]) - 1)) # auc average
                     if valid_stats[i][j] > self.best_valid_stats[i][j]:
                         self.best_valid_stats[i][j] = valid_stats[i][j]
                         if is_pivot:
@@ -103,7 +103,7 @@ class MoseiEmoTrainer(TrainerBase):
         self.save_model()
         print('Results and model are saved!')
 
-        print(self.model.modality_weights.weight)
+        # print(self.model.modality_weights.weight)
 
     def valid(self):
         valid_stats = self.eval_one_epoch()
@@ -165,7 +165,7 @@ class MoseiEmoTrainer(TrainerBase):
             X_text = X_text.to(device=self.device)
             X_audio = X_audio.to(device=self.device)
             X_vision = X_vision.to(device=self.device)
-            Y = Y.squeeze().to(device=self.device)
+            Y = Y.to(device=self.device)
 
             with torch.set_grad_enabled(False):
                 logits = self.model(X_text, X_audio, X_vision)
@@ -195,6 +195,8 @@ class IemocapTrainer(TrainerBase):
         self.all_valid_stats = []
         self.all_test_stats = []
 
+        iemocap9 = ['angry', 'excited', 'fear', 'sad', 'surprised', 'frustrated', 'happy', 'neutral', 'disgust']
+
         self.headers = [
             ['phase', 'neutral (acc)', 'happy (acc)', 'sad (acc)', 'angry (acc)', 'average'],
             ['phase', 'neutral (f1)', 'happy (f1)', 'sad (f1)', 'angry (f1)', 'average']
@@ -202,8 +204,8 @@ class IemocapTrainer(TrainerBase):
 
         zsl = args['zsl']
         if zsl != -1:
-            for i in range(3):
-                self.headers[i] = self.headers[i][:zsl + 1] + self.headers[i][zsl + 2:]
+            self.headers[0] = [*self.headers[0][:-1], iemocap9[zsl] + '(acc)', self.headers[0][-1]]
+            self.headers[1] = [*self.headers[1][:-1], iemocap9[zsl] + '(f1)', self.headers[1][-1]]
 
         self.prev_train_stats = [
             [-float('inf')] * (model.num_classes + 1), # single wacc
@@ -273,7 +275,7 @@ class IemocapTrainer(TrainerBase):
         self.save_model()
         print('Results and model are saved!')
         # if self.args['verbose']:
-        print(self.model.modality_weights.weight)
+        # print(self.model.modality_weights.weight)
 
     def valid(self):
         valid_stats = self.eval_one_epoch()
@@ -306,13 +308,13 @@ class IemocapTrainer(TrainerBase):
             X_text = X_text.to(device=self.device)
             X_audio = X_audio.to(device=self.device)
             X_vision = X_vision.to(device=self.device)
-            Y = Y.squeeze().to(device=self.device)
+            Y = Y.to(device=self.device)
 
             self.optimizer.zero_grad()
             with torch.set_grad_enabled(True):
                 logits = self.model(X_text, X_audio, X_vision) # (batch_size, num_classes)
-                loss = self.criterion(logits, torch.argmax(Y, dim=-1))
-                # loss = self.criterion(logits.view(-1, 2), Y.view(-1))
+                # loss = self.criterion(logits, torch.argmax(Y, dim=-1))
+                loss = self.criterion(logits, Y)
                 loss.backward()
                 epoch_loss += loss.item() * Y.size(0)
                 if self.args['clip'] > 0:
@@ -340,7 +342,8 @@ class IemocapTrainer(TrainerBase):
 
             with torch.set_grad_enabled(False):
                 logits = self.model(X_text, X_audio, X_vision)
-                loss = self.criterion(logits, torch.argmax(Y, dim=-1))
+                # loss = self.criterion(logits, torch.argmax(Y, dim=-1))
+                loss = self.criterion(logits, Y)
                 epoch_loss += loss.item() * Y.size(0)
 
             total_logits = torch.cat((total_logits, logits), dim=0) if total_logits is not None else logits

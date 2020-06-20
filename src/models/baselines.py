@@ -24,12 +24,14 @@ class EF_RNN(nn.Module):
         if bidirectional:
             linear_in_size = linear_in_size * 2
 
-        self.out = nn.Sequential(
-            # nn.Linear(linear_in_size, linear_in_size),
-            # nn.ReLU(),
-            # nn.Dropout(0.1),
-            nn.Linear(linear_in_size, num_classes)
-        )
+        # self.out = nn.Sequential(
+        #     nn.Linear(linear_in_size, linear_in_size),
+        #     nn.ReLU(),
+        #     nn.Dropout(0.1),
+        #     nn.Linear(linear_in_size, num_classes)
+        # )
+
+        self.out = nn.Linear(linear_in_size, num_classes)
 
     def forward(self, X_text, X_audio, X_vision):
         # (batch, seq_len, num_directions * hidden_size)

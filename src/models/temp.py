@@ -46,6 +46,10 @@ class EmotionEmbAttnModel(nn.Module):
             ) for i, input_size in enumerate(input_sizes)
         ])
 
+        # self.linear_fusion_ta = nn.Linear(hidden_sizes[0] + hidden_sizes[1], hidden_sizes[2])
+        # self.linear_fusion_tv = nn.Linear(hidden_sizes[0] + hidden_sizes[2], hidden_sizes[1])
+        # self.linear_fusion_av = nn.Linear(hidden_sizes[2] + hidden_sizes[1], hidden_sizes[0])
+
         self.modality_weights = nn.Linear(len(modalities), 1, bias=False)
         self.modality_weights.weight = nn.Parameter(F.softmax(torch.ones(len(modalities)), dim=0))
 
@@ -67,23 +71,25 @@ class EmotionEmbAttnModel(nn.Module):
         #     nn.Sigmoid()
         # )
 
-    def attention(self, attender, attendee):
+    def attention(self, attender, attendee, only_weight=True):
         # attender: (batch, hid_dim)
         # attendee: (batch, seq_len, hid_dim)
         attender = attender.unsqueeze(-1)
         attn_weights = torch.bmm(attendee, attender) # (batch, seq_len, 1)
-        # attn_weights = F.softmax(attn_weights, dim=1)
-        # res = torch.sum(attendee * attn_weights, dim=1) # (batch, hid_dim)
-        # return res
-        return attn_weights.squeeze(-1)
+
+        if only_weight:
+            return attn_weights.squeeze(-1)
+
+        attn_weights = F.softmax(attn_weights, dim=1)
+        res = torch.sum(attendee * attn_weights, dim=1) # (batch, hid_dim)
+        return res
 
     def forward(self, X_text, X_audio, X_visual):
-        # TODO: try residual connection
-
         batch_size = X_text.size(0)
         text_emo_vecs_origin = self.textEmoEmbs(torch.LongTensor(list(range(self.num_classes))).to(self.device))
         logits = None
         scores = []
+
         if 't' in self.modalities:
             output_text, _ = self.RNNs[0](X_text)
             if self.bidirectional:
@@ -118,6 +124,29 @@ class EmotionEmbAttnModel(nn.Module):
             visual_attn_weights = self.attention(output_visual, visual_emo_vecs)
             # logits = visual_attn_weights if logits is None else logits + visual_attn_weights
             scores.append(visual_attn_weights.unsqueeze(0))
+
+        # output_ta = self.linear_fusion_ta(torch.cat((output_text[:, -1, :], output_audio[:, -1, :]), dim=-1))
+        # output_tv = self.linear_fusion_tv(torch.cat((output_text[:, -1, :], output_visual[:, -1, :]), dim=-1))
+        # output_av = self.linear_fusion_av(torch.cat((output_visual[:, -1, :], output_audio[:, -1, :]), dim=-1))
+
+        # output_text = self.attention(output_av, output_text, False)
+        # output_audio = self.attention(output_tv, output_audio, False)
+        # output_visual = self.attention(output_ta, output_visual, False)
+
+        # text_emo_vecs = text_emo_vecs_origin.unsqueeze(0).repeat(batch_size, 1, 1)
+        # text_attn_weights = self.attention(output_text, text_emo_vecs)
+        # scores.append(text_attn_weights.unsqueeze(0))
+
+        # audio_emo_vecs = self.affineAudio(text_emo_vecs_origin)
+        # audio_emo_vecs = audio_emo_vecs.unsqueeze(0).repeat(batch_size, 1, 1)
+        # audio_attn_weights = self.attention(output_audio, audio_emo_vecs)
+        # scores.append(audio_attn_weights.unsqueeze(0))
+
+        # visual_emo_vecs = self.affineVisual(text_emo_vecs_origin)
+        # visual_emo_vecs = visual_emo_vecs.unsqueeze(0).repeat(batch_size, 1, 1)
+        # visual_attn_weights = self.attention(output_visual, visual_emo_vecs)
+        # scores.append(visual_attn_weights.unsqueeze(0))
+
 
         if len(self.modalities) == 1:
             return scores[0].squeeze(0)
