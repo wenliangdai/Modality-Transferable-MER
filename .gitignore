@@ -3,3 +3,4 @@ data
 savings
 .vscode
 processed_datasets/
+*.pt

@@ -77,14 +77,3 @@ def cmumosei_round(a):
     if a > 2:
         res = 3
     return res
-
-
-# if __name__ == '__main__':
-#     from tqdm import tqdm
-#     f = open('/Users/wenliangdai/Documents/Codes/Datasets/glove.840B.300d.txt', 'r', encoding='utf-8')
-#     lines = f.readlines()
-#     word2emb = {}
-#     for line in tqdm(lines):
-#         line = line.replace('\xa0', '').split()
-#         word2emb[line[0]] = [float(n) for n in line[1:]]
-#     save(word2emb, '/Users/wenliangdai/Documents/glove.dict.840B.300d.pt')

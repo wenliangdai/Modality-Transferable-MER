@@ -14,10 +14,6 @@ EMOTIONS = {
     # 'iemocap': ['happy', 'sad', 'angry', 'neutral']
 }
 
-# input_sizes = {
-#     'mosei_senti': [300, 74, 35],
-# }
-
 CRITERIONS = {
     'mosei_senti': torch.nn.L1Loss,
     'mosi': torch.nn.L1Loss,
@@ -71,6 +67,6 @@ MULT_PARAMS = {
         'attn_dropout_a': 0.0,
         'attn_dropout_v': 0.0,
         'attn_mask': False,
-        'output_dim': 1
+        'output_dim': 4
     }
 }

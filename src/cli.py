@@ -3,8 +3,6 @@ import argparse
 def get_args():
     parser = argparse.ArgumentParser(description='Multi-modal emotion recognition')
 
-    parser.add_argument('-lf', '--log-file', help='Log file', type=str, required=False, default='')
-
     # Training hyper-parameters
     parser.add_argument('-bs', '--batch-size', help='Batch size', type=int, required=True)
     parser.add_argument('-lr', '--learning-rate', help='Learning rate', type=float, required=True)
@@ -23,8 +21,6 @@ def get_args():
     parser.add_argument('--optim', help='optimizer function: adam/sgd', type=str, required=False, default='adam')
 
     parser.add_argument('--threshold', help='Threshold of for multi-label emotion recognition', type=float, required=False, default=0.5)
-    # parser.add_argument('--threshold-wacc', help='Threshold of weighted accuracy for multi-label emotion recognition', type=float, required=False, default=0.2)
-    # parser.add_argument('--threshold-f1', help='Threshold of f1 score for multi-label emotion recognition', type=float, required=False, default=0.4)
 
     parser.add_argument('--verbose', help='Verbose mode to print more logs', action='store_true')
 

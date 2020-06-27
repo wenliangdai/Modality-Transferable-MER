@@ -3,18 +3,14 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
-
+from src.utils import save
 
 def multiclass_acc(preds, truths):
     return np.sum(np.round(preds) == np.round(truths)) / float(len(truths))
 
 def weighted_acc(preds, truths, verbose):
-    # https://www.aclweb.org/anthology/P17-1142.pdf
     preds = preds.view(-1)
     truths = truths.view(-1)
-
-    # print(preds)
-    # print(truths)
 
     total = len(preds)
     tp = 0
@@ -36,7 +32,10 @@ def weighted_acc(preds, truths, verbose):
     if verbose:
         fp = n - tn
         fn = p - tp
-        print('TP=', tp, 'TN=', tn, 'FP=', fp, 'FN=', fn, 'P=', p, 'N', n)
+        recall = tp / (tp + fn + 1e-8)
+        precision = tp / (tp + fp + 1e-8)
+        f1 = 2 * recall * precision / (recall + precision + 1e-8)
+        print('TP=', tp, 'TN=', tn, 'FP=', fp, 'FN=', fn, 'P=', p, 'N', n, 'Recall', recall, "f1", f1)
 
     return w_acc
 
@@ -78,31 +77,11 @@ def eval_mosei_emo(preds, truths, threshold, verbose=False):
 
     preds = torch.sigmoid(preds)
 
-    # auc_score = roc_auc_score(truths.numpy(), preds.numpy())
-
-    # aucs = []
-    # for emo_ind in range(num_emo):
-    #     aucs.append(roc_auc_score(truths.numpy()[:, emo_ind], preds.numpy()[:, emo_ind]))
-    # aucs.append(np.average(aucs))
-
     aucs = roc_auc_score(truths, preds, labels=list(range(num_emo)), average=None).tolist()
-    # aucs.append(roc_auc_score(truths, preds, labels=list(range(num_emo)), average='weighted'))
     aucs.append(np.average(aucs))
 
     preds[preds > threshold] = 1
     preds[preds <= threshold] = 0
-
-    # add a new class that represents no emotion
-    # truths = torch.cat((truths, torch.zeros((total, 1))), dim=1)
-    # preds = torch.cat((preds, torch.zeros((total, 1))), dim=1)
-    # for i in range(len(truths)):
-    #     if torch.sum(turths[i]).item() == 0:
-    #         turths[i][-1] = 1
-    #     if torch.sum(preds[i]).item() == 0:
-    #         preds[i][-1] = 1
-
-    # f1s = f1_score(truths, preds, labels=list(range(num_emo)), average=None).tolist()
-    # f1s.append(f1_score(truths, preds, labels=list(range(num_emo)), average='weighted'))
 
     accs = []
     f1s = []
@@ -138,9 +117,9 @@ def eval_mosei_emo(preds, truths, threshold, verbose=False):
             if is_loose:
                 acc_intersect += 1
 
-    acc_strict /= total # all correct（对于每个数据，完整预测正确所有 emotion 的正确率）
-    acc_intersect /= total # at least one emotion is predicted（对于每个数据，至少预测正确一个 emotion 的正确率）
-    acc_subset /= total # predicted is a subset of truth（对于每个数据，至少预测正确一个 emotion，并且预测存在的 emotion 必须是 truth 的子集 的正确率）
+    acc_strict /= total # all correct
+    acc_intersect /= total # at least one emotion is predicted
+    acc_subset /= total # predicted is a subset of truth
 
     return accs, f1s, aucs, [acc_strict, acc_subset, acc_intersect]
 
@@ -160,58 +139,37 @@ def eval_iemocap(preds, truths):
 
     preds = torch.sigmoid(preds)
 
-    temp1 = []
-    temp2 = []
-    for i, truth in enumerate(truths):
-        if truth[-1] == 1:
-            temp1.append(preds[i].tolist())
-            # print(preds[i])
-        else:
-            temp2.append(preds[i].tolist())
-            # print(preds[i])
-    # print(temp2)
-    print(np.mean(temp1,0))
-    print(np.mean(temp2,0))
+    aucs = roc_auc_score(truths, preds, labels=list(range(num_emo)), average=None).tolist()
+    aucs.append(np.average(aucs))
 
-    # zsl: 0.5 0.5 0.3
-    th = [0.5, 0.55, 0.55, 0.95]
+    # temp1 = []
+    # temp2 = []
+    # for i, truth in enumerate(truths):
+    #     if truth[-1] == 1:
+    #         temp1.append(preds[i].tolist())
+    #         # print(preds[i])
+    #     else:
+    #         temp2.append(preds[i].tolist())
+    #         # print(preds[i])
+    # # print(temp2)
+    # print(np.mean(temp1,0))
+    # print(np.mean(temp2,0))
+
+    # zsl: 0.5 0.35 0.3
+    th = [0.4, 0.65, 0.6, 0.95, 0.5]
     for i in range(len(th)):
         pred = preds[:, i]
         pred[pred > th[i]] = 1
         pred[pred <= th[i]] = 0
         preds[:, i] = pred
 
-    # preds[0][preds[0] > 0.7] = 1
-    # preds[0][preds[0] <= 0.7] = 0
-
-    # preds[1][preds[1] > 0.5] = 1
-    # preds[1][preds[1] <= 0.5] = 0
-
-    # preds[2][preds[2] > 0.5] = 1
-    # preds[2][preds[2] <= 0.5] = 0
-
-    # preds[3][preds[3] > 0.5] = 1
-    # preds[3][preds[3] <= 0.5] = 0
-
-    # preds_inds = torch.argmax(preds, dim=-1)
-    # preds = torch.zeros_like(preds)
-
-    # for i in range(total):
-    #     preds[i, preds_inds[i]] = 1
-
-    # print(preds)
-    # print(truths)
-
-    # truths = truths.to(torch.int32)
-
     accs = []
     f1s = []
     for i in range(num_emo):
         pred_i = preds[:, i]
         truth_i = truths[:, i]
-        # acc = torch.sum(pred_i == truth_i).item() / total
 
-        acc = weighted_acc(pred_i, truth_i, True)
+        acc = weighted_acc(pred_i, truth_i, verbose=True)
         acc = accuracy_score(truth_i, pred_i)
 
         f1 = f1_score(truth_i, pred_i, average='weighted')
@@ -221,4 +179,4 @@ def eval_iemocap(preds, truths):
     accs.append(np.average(accs))
     f1s.append(np.average(f1s))
 
-    return accs, f1s
+    return accs, f1s, aucs

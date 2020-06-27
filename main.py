@@ -19,17 +19,6 @@ from src.sampler import ImbalancedDatasetSampler
 if __name__ == "__main__":
     args = get_args()
 
-    # Hijack Python's print function
-    # if args['log_file'] != '':
-    #     dirname = os.path.dirname(args['log_file'])
-    #     if not os.path.exists(dirname):
-    #         os.makedirs(dirname)
-    #     __print = print
-    #     __f = open(args['log_file'], 'a')
-    #     def print(*args):
-    #         __print(*args)
-    #         __print(*args, file=__f)
-
     # Fix seed for reproducibility
     seed = args['seed']
     torch.manual_seed(seed)
@@ -45,7 +34,7 @@ if __name__ == "__main__":
     valid_data = get_data(args, 'valid')
     test_data = get_data(args, 'test')
 
-    train_loader = DataLoader(train_data, batch_size=args['batch_size'], shuffle=True) # , sampler=ImbalancedDatasetSampler(train_data)
+    train_loader = DataLoader(train_data, batch_size=args['batch_size'], shuffle=True)
     valid_loader = DataLoader(valid_data, batch_size=args['batch_size'], shuffle=False)
     test_loader = DataLoader(test_data, batch_size=args['batch_size'], shuffle=False)
 
@@ -70,6 +59,8 @@ if __name__ == "__main__":
         mult_params['orig_d_a'] = modal_dims[1]
         mult_params['orig_d_v'] = modal_dims[2]
         mult_params['hidden_dim'] = args['hidden_dim']
+        if args['zsl'] != -1:
+            mult_params['output_dim'] = mult_params['output_dim'] + 1
         model = MULTModel(mult_params)
     elif model_type == 'rnn':
         if fusion_type == 'lf':
@@ -86,7 +77,10 @@ if __name__ == "__main__":
         num_classes = NUM_CLASSES[args['dataset']]
 
         if args['zsl'] != -1:
-            num_classes -= 1
+            if args['dataset'] == 'iemocap':
+                num_classes += 1
+            else:
+                num_classes -= 1
 
         model = MODEL(
             num_classes=num_classes,
@@ -169,9 +163,25 @@ if __name__ == "__main__":
                 model.out.bias = torch.nn.Parameter(out_bias)
             state_dict.pop('out.weight')
             state_dict.pop('out.bias')
-        model.load_state_dict(state_dict, strict=False)
+        if args['model'] == 'mult':
+            if args['zsl_test'] != -1:
+                out_weight = copy.deepcopy(model.out_layer.weight)
+                out_bias = copy.deepcopy(model.out_layer.bias)
+                pretrained_out_weight = state_dict['out_layer.weight']
+                pretrained_out_bias = state_dict['out_layer.bias']
+                indicator = 0
+                for i in range(len(model.out_layer.weight)):
+                    if i == args['zsl_test']:
+                        indicator = 1
+                        continue
+                    out_weight[i] = pretrained_out_weight[i - indicator]
+                    out_bias[i] = pretrained_out_bias[i - indicator]
+                model.out_layer.weight = torch.nn.Parameter(out_weight)
+                model.out_layer.bias = torch.nn.Parameter(out_bias)
+            state_dict.pop('out_layer.weight')
+            state_dict.pop('out_layer.bias')
 
-    print(model)
+        model.load_state_dict(state_dict, strict=False)
 
     if args['optim'] == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=args['learning_rate'], weight_decay=args['weight_decay'])

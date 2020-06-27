@@ -10,9 +10,9 @@ class MULTModel(nn.Module):
         Construct a MulT model.
         """
         super(MULTModel, self).__init__()
+        self.num_classes = hyp_params['output_dim']
         self.orig_d_l, self.orig_d_a, self.orig_d_v = hyp_params['orig_d_l'], hyp_params['orig_d_a'], hyp_params['orig_d_v']
-        # self.d_l, self.d_a, self.d_v = 30, 30, 30
-        self.d_l, self.d_a, self.d_v = hyp_params['hidden_dim'], hyp_params['hidden_dim'], hyp_params['hidden_dim']
+        self.d_l, self.d_a, self.d_v = 40, 40, 40
         self.vonly = hyp_params['vonly']
         self.aonly = hyp_params['aonly']
         self.lonly = hyp_params['lonly']
@@ -38,9 +38,9 @@ class MULTModel(nn.Module):
         output_dim = hyp_params['output_dim']        # This is actually not a hyperparameter :-)
 
         # 1. Temporal convolutional layers
-        self.proj_l = nn.Conv1d(self.orig_d_l, self.d_l, kernel_size=1, padding=0, bias=False)
-        self.proj_a = nn.Conv1d(self.orig_d_a, self.d_a, kernel_size=1, padding=0, bias=False)
-        self.proj_v = nn.Conv1d(self.orig_d_v, self.d_v, kernel_size=1, padding=0, bias=False)
+        self.proj_l = nn.Conv1d(self.orig_d_l, self.d_l, kernel_size=3, padding=0, bias=False)
+        self.proj_a = nn.Conv1d(self.orig_d_a, self.d_a, kernel_size=5, padding=0, bias=False)
+        self.proj_v = nn.Conv1d(self.orig_d_v, self.d_v, kernel_size=3, padding=0, bias=False)
 
         # 2. Crossmodal Attentions
         if self.lonly:
@@ -143,5 +143,4 @@ class MULTModel(nn.Module):
         last_hs_proj += last_hs
 
         output = self.out_layer(last_hs_proj)
-        # return output, last_hs
         return output

@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
+from copy import deepcopy
+from src.utils import save
 
 class EmotionEmbAttnModel(nn.Module):
     def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, emo_weight, device, bidirectional=False, modalities='tav', gru=False):
@@ -125,28 +127,6 @@ class EmotionEmbAttnModel(nn.Module):
             # logits = visual_attn_weights if logits is None else logits + visual_attn_weights
             scores.append(visual_attn_weights.unsqueeze(0))
 
-        # output_ta = self.linear_fusion_ta(torch.cat((output_text[:, -1, :], output_audio[:, -1, :]), dim=-1))
-        # output_tv = self.linear_fusion_tv(torch.cat((output_text[:, -1, :], output_visual[:, -1, :]), dim=-1))
-        # output_av = self.linear_fusion_av(torch.cat((output_visual[:, -1, :], output_audio[:, -1, :]), dim=-1))
-
-        # output_text = self.attention(output_av, output_text, False)
-        # output_audio = self.attention(output_tv, output_audio, False)
-        # output_visual = self.attention(output_ta, output_visual, False)
-
-        # text_emo_vecs = text_emo_vecs_origin.unsqueeze(0).repeat(batch_size, 1, 1)
-        # text_attn_weights = self.attention(output_text, text_emo_vecs)
-        # scores.append(text_attn_weights.unsqueeze(0))
-
-        # audio_emo_vecs = self.affineAudio(text_emo_vecs_origin)
-        # audio_emo_vecs = audio_emo_vecs.unsqueeze(0).repeat(batch_size, 1, 1)
-        # audio_attn_weights = self.attention(output_audio, audio_emo_vecs)
-        # scores.append(audio_attn_weights.unsqueeze(0))
-
-        # visual_emo_vecs = self.affineVisual(text_emo_vecs_origin)
-        # visual_emo_vecs = visual_emo_vecs.unsqueeze(0).repeat(batch_size, 1, 1)
-        # visual_attn_weights = self.attention(output_visual, visual_emo_vecs)
-        # scores.append(visual_attn_weights.unsqueeze(0))
-
 
         if len(self.modalities) == 1:
             return scores[0].squeeze(0)
@@ -154,11 +134,5 @@ class EmotionEmbAttnModel(nn.Module):
         scores = torch.cat(tuple(scores), dim=0).transpose(0, 2)
         logits = self.modality_weights(scores)
         logits = logits.squeeze().t()
-
-        # for i in range(len(self.modalities)):
-        #     if i == 0:
-        #         logits = scores[i] * self.modality_weights[i]
-        #     else:
-        #         logits += scores[i] * self.modality_weights[i]
 
         return logits

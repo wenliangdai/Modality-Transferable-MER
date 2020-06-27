@@ -1,5 +1,6 @@
 import copy
 import torch
+import numpy as np
 from torch.nn.utils import clip_grad_norm_
 from tqdm import tqdm
 from tabulate import tabulate
@@ -55,6 +56,8 @@ class MoseiEmoTrainer(TrainerBase):
         ]
 
         self.best_epoch = -1
+
+        self.raw = []
 
     def train(self):
         for epoch in range(1, self.args['epochs'] + 1):
@@ -160,6 +163,9 @@ class MoseiEmoTrainer(TrainerBase):
         epoch_loss = 0.0
         total_logits = None
         total_Y = None
+        # total_outputs_text = None
+        # total_outputs_audio = None
+        # total_outputs_vision = None
         for X, Y, META in tqdm(dataloader, desc=phase):
             X_text, X_audio, X_vision = X
             X_text = X_text.to(device=self.device)
@@ -174,6 +180,9 @@ class MoseiEmoTrainer(TrainerBase):
 
             total_logits = torch.cat((total_logits, logits), dim=0) if total_logits is not None else logits
             total_Y = torch.cat((total_Y, Y), dim=0) if total_Y is not None else Y
+            # total_outputs_text = torch.cat((total_outputs_text, outputs[0]), dim=0) if total_outputs_text is not None else outputs[0]
+            # total_outputs_audio = torch.cat((total_outputs_audio, outputs[1]), dim=0) if total_outputs_audio is not None else outputs[1]
+            # total_outputs_vision = torch.cat((total_outputs_vision, outputs[2]), dim=0) if total_outputs_vision is not None else outputs[2]
 
         epoch_loss /= len(dataloader.dataset)
 
@@ -181,10 +190,6 @@ class MoseiEmoTrainer(TrainerBase):
             self.scheduler.step(epoch_loss)
 
         print(f'{phase} loss = {epoch_loss}')
-        # save({
-        #     'total_logits': total_logits.cpu().detach().numpy(),
-        #     'total_Y': total_Y.cpu().detach().numpy()
-        # }, './for_choose_thre2_val.pt')
         return eval_mosei_emo(total_logits, total_Y, self.args['threshold'], self.args['verbose'])
 
 
@@ -199,32 +204,38 @@ class IemocapTrainer(TrainerBase):
 
         self.headers = [
             ['phase', 'neutral (acc)', 'happy (acc)', 'sad (acc)', 'angry (acc)', 'average'],
-            ['phase', 'neutral (f1)', 'happy (f1)', 'sad (f1)', 'angry (f1)', 'average']
+            ['phase', 'neutral (f1)', 'happy (f1)', 'sad (f1)', 'angry (f1)', 'average'],
+            ['phase', 'neutral (auc)', 'happy (auc)', 'sad (auc)', 'angry (auc)', 'average']
         ]
 
         zsl = args['zsl']
         if zsl != -1:
             self.headers[0] = [*self.headers[0][:-1], iemocap9[zsl] + '(acc)', self.headers[0][-1]]
             self.headers[1] = [*self.headers[1][:-1], iemocap9[zsl] + '(f1)', self.headers[1][-1]]
+            self.headers[2] = [*self.headers[2][:-1], iemocap9[zsl] + '(auc)', self.headers[2][-1]]
 
         self.prev_train_stats = [
             [-float('inf')] * (model.num_classes + 1), # single wacc
-            [-float('inf')] * (model.num_classes + 1) # single f1
+            [-float('inf')] * (model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 1)
         ]
 
         self.prev_valid_stats = [
             [-float('inf')] * (model.num_classes + 1), # single wacc
-            [-float('inf')] * (model.num_classes + 1) # single f1
+            [-float('inf')] * (model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 1)
         ]
 
         self.prev_test_stats = [
             [-float('inf')] * (model.num_classes + 1), # single wacc
-            [-float('inf')] * (model.num_classes + 1) # single f1
+            [-float('inf')] * (model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 1)
         ]
 
         self.best_valid_stats = [
             [-float('inf')] * (model.num_classes + 1), # single wacc
-            [-float('inf')] * (model.num_classes + 1) # single f1
+            [-float('inf')] * (model.num_classes + 1), # single f1
+            [-float('inf')] * (model.num_classes + 1)
         ]
 
         self.best_epoch = -1
@@ -270,6 +281,7 @@ class IemocapTrainer(TrainerBase):
         print('=== Best performance ===')
         print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][0]]], headers=self.headers[0]))
         print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][1]]], headers=self.headers[1]))
+        print(tabulate([[f'Test ({self.best_epoch})', *self.all_test_stats[self.best_epoch - 1][2]]], headers=self.headers[2]))
 
         self.save_stats()
         self.save_model()
@@ -355,8 +367,4 @@ class IemocapTrainer(TrainerBase):
             self.scheduler.step(epoch_loss)
 
         print(f'{phase} loss = {epoch_loss}')
-        # save({
-        #     'total_logits': total_logits.cpu().detach().numpy(),
-        #     'total_Y': total_Y.cpu().detach().numpy()
-        # }, './for_choose_thre2_val.pt')
         return eval_iemocap(total_logits, total_Y)
