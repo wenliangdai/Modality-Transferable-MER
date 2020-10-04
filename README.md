@@ -21,4 +21,124 @@ Despite the recent achievements made in the multi-modal emotion recognition task
 
 We use the pre-processed features from the [CMU-Multimodal SDK](https://github.com/A2Zadeh/CMU-MultimodalSDK).
 
-Or you can directly download the data from http://immortal.multicomp.cs.cmu.edu/raw_datasets/processed_data/.
+Or you can directly download the data from [here](http://immortal.multicomp.cs.cmu.edu/raw_datasets/processed_data/).
+
+## Preparation for running
+1. Create a new folder named ***data*** at the root of this project
+
+2. Download Emotion Embeddings from [here](https://drive.google.com/file/d/1RXdPUv03DIA7vO_RXTfBQ4RLQ6el0MFf/view?usp=sharing), and then put it in the $data$ folder.
+
+3. Download data
+    - For a quick run
+      - Just download our saved `torch.utils.data.dataset.Dataset` datasets from [here](https://drive.google.com/file/d/17561ChjBP3psNypLMNcX7AohZqcTd4wI/view?usp=sharing), unzip it at the root of this project.
+    - For a normal run
+      - Download the data from [here](http://immortal.multicomp.cs.cmu.edu/raw_datasets/processed_data/)
+      - Check the ***data_folder_structure.txt*** file, which shows the structure about how to organize data files
+      - Put data files correspondingly
+
+4. Good to go!
+
+## Command line arguments and examples
+
+```
+usage: main.py [-h] -bs BATCH_SIZE -lr LEARNING_RATE [-wd WEIGHT_DECAY] -ep
+               EPOCHS [-es EARLY_STOP] [-cu CUDA] [-mo MODEL] [-fu FUSION]
+               [-cl CLIP] [-sc] [-se SEED] [-pa PATIENCE] [-ez] [--loss LOSS]
+               [--optim OPTIM] [--threshold THRESHOLD] [--verbose]
+               [-mod MODALITIES] [--valid] [--test] [--dataset DATASET]
+               [--aligned] [--data-seq-len DATA_SEQ_LEN]
+               [--data-folder DATA_FOLDER] [--glove-emo-path GLOVE_EMO_PATH]
+               [--cap] [--iemocap4] [--iemocap9] [--zsl ZSL]
+               [--zsl-test ZSL_TEST] [--fsl FSL] [--ckpt CKPT] [-dr DROPOUT]
+               [-nl NUM_LAYERS] [-hs HIDDEN_SIZE]
+               [-hss HIDDEN_SIZES [HIDDEN_SIZES ...]] [-bi] [--gru]
+               [--hidden-dim HIDDEN_DIM]
+
+Multimodal Emotion Recognition
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -bs BATCH_SIZE, --batch-size BATCH_SIZE
+                        Batch size
+  -lr LEARNING_RATE, --learning-rate LEARNING_RATE
+                        Learning rate
+  -wd WEIGHT_DECAY, --weight-decay WEIGHT_DECAY
+                        Weight decay
+  -ep EPOCHS, --epochs EPOCHS
+                        Number of epochs
+  -es EARLY_STOP, --early-stop EARLY_STOP
+                        Early stop
+  -cu CUDA, --cuda CUDA
+                        Cude device number
+  -mo MODEL, --model MODEL
+                        Model type: mult/rnn/transformer/eea
+  -fu FUSION, --fusion FUSION
+                        Modality fusion type: ef/lf
+  -cl CLIP, --clip CLIP
+                        Use clip to gradients
+  -sc, --scheduler      Use scheduler to optimizer
+  -se SEED, --seed SEED
+                        Random seed
+  -pa PATIENCE, --patience PATIENCE
+                        Patience of the scheduler
+  -ez, --exclude-zero   Exclude zero in evaluation
+  --loss LOSS           loss function: l1/mse/ce/bce
+  --optim OPTIM         optimizer function: adam/sgd
+  --threshold THRESHOLD
+                        Threshold of for multi-label emotion recognition
+  --verbose             Verbose mode to print more logs
+  -mod MODALITIES, --modalities MODALITIES
+                        What modalities to use
+  --valid               Valid mode
+  --test                Test mode
+  --dataset DATASET     Dataset to use
+  --aligned             Aligned experiment or not
+  --data-seq-len DATA_SEQ_LEN
+                        Data sequence length
+  --data-folder DATA_FOLDER
+                        path for storing the dataset
+  --glove-emo-path GLOVE_EMO_PATH
+  --cap                 Capitalize the first letter of emotion words
+  --iemocap4            Only use 4 emtions in IEMOCAP
+  --iemocap9            Only use 9 emtions in IEMOCAP
+  --zsl ZSL             Do zero shot learning on which emotion (index)
+  --zsl-test ZSL_TEST   Notify which emotion was zsl before
+  --fsl FSL             Do few shot learning on which emotion (index)
+  --ckpt CKPT
+  -dr DROPOUT, --dropout DROPOUT
+                        dropout
+  -nl NUM_LAYERS, --num-layers NUM_LAYERS
+                        num of layers of LSTM
+  -hs HIDDEN_SIZE, --hidden-size HIDDEN_SIZE
+                        hidden vector size of LSTM
+  -hss HIDDEN_SIZES [HIDDEN_SIZES ...], --hidden-sizes HIDDEN_SIZES [HIDDEN_SIZES ...]
+                        hidden vector size of LSTM
+  -bi, --bidirectional  Use Bi-LSTM
+  --gru                 Use GRU rather than LSTM
+  --hidden-dim HIDDEN_DIM
+                        Transformers hidden unit size
+```
+
+Training our model on the CMU-MOSEI dataset
+
+```console
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea --data-folder=./data/cmu-mosei/seq_length_20/data --data-seq-len=20 --dataset=mosei_emo --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
+```
+
+Training our model on the IEMOCAP dataset
+
+```console
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea --data-folder=./data/iemocap/seq_length_20/data --data-seq-len=20 --dataset=iemocap --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
+```
+
+Training a early fusion lstm baseline
+
+```console
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=rnn --fusion=ef --data-folder=./data/iemocap/seq_length_20/data --data-seq-len=20 --dataset=iemocap --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
+```
+
+## Requirements
+
+1. Python 3.6 +
+2. PyTorch 1.4 +
+3. GeForce GTX 1080Ti GPU (or more advanced)
