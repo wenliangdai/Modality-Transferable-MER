@@ -1,12 +1,10 @@
 import copy
 import torch
-import numpy as np
 from torch.nn.utils import clip_grad_norm_
 from tqdm import tqdm
 from tabulate import tabulate
 from src.evaluate import eval_mosei_emo, eval_iemocap
 from src.trainers.base import TrainerBase
-from src.utils import save
 
 class MoseiEmoTrainer(TrainerBase):
     def __init__(self, args, model, criterion, optimizer, scheduler, device, dataloaders):
@@ -163,9 +161,6 @@ class MoseiEmoTrainer(TrainerBase):
         epoch_loss = 0.0
         total_logits = None
         total_Y = None
-        # total_outputs_text = None
-        # total_outputs_audio = None
-        # total_outputs_vision = None
         for X, Y, META in tqdm(dataloader, desc=phase):
             X_text, X_audio, X_vision = X
             X_text = X_text.to(device=self.device)
@@ -180,9 +175,6 @@ class MoseiEmoTrainer(TrainerBase):
 
             total_logits = torch.cat((total_logits, logits), dim=0) if total_logits is not None else logits
             total_Y = torch.cat((total_Y, Y), dim=0) if total_Y is not None else Y
-            # total_outputs_text = torch.cat((total_outputs_text, outputs[0]), dim=0) if total_outputs_text is not None else outputs[0]
-            # total_outputs_audio = torch.cat((total_outputs_audio, outputs[1]), dim=0) if total_outputs_audio is not None else outputs[1]
-            # total_outputs_vision = torch.cat((total_outputs_vision, outputs[2]), dim=0) if total_outputs_vision is not None else outputs[2]
 
         epoch_loss /= len(dataloader.dataset)
 

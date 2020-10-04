@@ -1,4 +1,3 @@
-import os
 import copy
 import torch
 import numpy as np
@@ -12,8 +11,7 @@ from src.models import baselines # EF_LSTM, LF_LSTM, EF_LF_LSTM
 from src.models.transformers import EF_Transformer
 from src.models.mult import MULTModel
 from src.models.temp import EmotionEmbAttnModel
-from src.config import NUM_CLASSES, CRITERIONS, MULT_PARAMS, EMOTIONS
-from src.sampler import ImbalancedDatasetSampler
+from src.config import NUM_CLASSES, MULT_PARAMS, EMOTIONS
 
 
 if __name__ == "__main__":
@@ -120,7 +118,6 @@ if __name__ == "__main__":
         for emo in emo_list:
             emo_weight.append(emo_weights[emo])
 
-        print(emo_list)
         MODEL = EmotionEmbAttnModel
         model = MODEL(
             num_classes=len(emo_list),
@@ -140,6 +137,7 @@ if __name__ == "__main__":
 
     model = model.to(device=device)
 
+    # Load model checkpoint
     if args['ckpt'] != '':
         state_dict = load(args['ckpt'])
         if args['model'] == 'eea':
@@ -195,7 +193,6 @@ if __name__ == "__main__":
     elif args['loss'] == 'mse':
         criterion = torch.nn.MSELoss()
     elif args['loss'] == 'ce':
-        # weight=torch.tensor([0.35112256, 0.12440191, 0.25395657, 0.27051895]).to(device)
         criterion = torch.nn.CrossEntropyLoss()
     elif args['loss'] == 'bce':
         pos_weight = train_data.get_pos_weight()

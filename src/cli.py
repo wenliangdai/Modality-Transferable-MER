@@ -10,8 +10,8 @@ def get_args():
     parser.add_argument('-ep', '--epochs', help='Number of epochs', type=int, required=True)
     parser.add_argument('-es', '--early-stop', help='Early stop', type=int, required=False, default=4)
     parser.add_argument('-cu', '--cuda', help='Cude device number', type=str, required=False, default='0')
-    parser.add_argument('-mo', '--model', help='model type', type=str, required=False, default='rnn')
-    parser.add_argument('-fu', '--fusion', help='modality fusion type', type=str, required=False, default='ef')
+    parser.add_argument('-mo', '--model', help='Model type: mult/rnn/transformer/eea', type=str, required=False, default='rnn')
+    parser.add_argument('-fu', '--fusion', help='Modality fusion type: ef/lf', type=str, required=False, default='ef')
     parser.add_argument('-cl', '--clip', help='Use clip to gradients', type=float, required=False, default=-1.0)
     parser.add_argument('-sc', '--scheduler', help='Use scheduler to optimizer', action='store_true')
     parser.add_argument('-se', '--seed', help='Random seed', type=int, required=False, default=0)
@@ -19,13 +19,9 @@ def get_args():
     parser.add_argument('-ez', '--exclude-zero', help='Exclude zero in evaluation', action='store_true')
     parser.add_argument('--loss', help='loss function: l1/mse/ce/bce', type=str, required=False, default='l1')
     parser.add_argument('--optim', help='optimizer function: adam/sgd', type=str, required=False, default='adam')
-
     parser.add_argument('--threshold', help='Threshold of for multi-label emotion recognition', type=float, required=False, default=0.5)
-
     parser.add_argument('--verbose', help='Verbose mode to print more logs', action='store_true')
-
-    parser.add_argument('-mod', '--modalities', help='what modalities to use', type=str, required=False, default='tav')
-
+    parser.add_argument('-mod', '--modalities', help='What modalities to use', type=str, required=False, default='tav')
     parser.add_argument('--valid', help='Valid mode', action='store_true')
     parser.add_argument('--test', help='Test mode', action='store_true')
 
@@ -36,7 +32,6 @@ def get_args():
     parser.add_argument('--data-folder', type=str, default='data', help='path for storing the dataset')
     parser.add_argument('--glove-emo-path', type=str, default='data/glove.emotions.840B.300d.pt')
     parser.add_argument('--cap', action='store_true', help='Capitalize the first letter of emotion words')
-    parser.add_argument('--multi-level-classify', help='MOSEI emotion multi level', action='store_true')
     parser.add_argument('--iemocap4', help='Only use 4 emtions in IEMOCAP', action='store_true')
     parser.add_argument('--iemocap9', help='Only use 9 emtions in IEMOCAP', action='store_true')
     parser.add_argument('--zsl', help='Do zero shot learning on which emotion (index)', type=int, required=False, default=-1)
@@ -53,7 +48,6 @@ def get_args():
     parser.add_argument('-hss', '--hidden-sizes', help='hidden vector size of LSTM', nargs='+', type=int, required=False, default=[256, 64, 32])
     parser.add_argument('-bi', '--bidirectional', help='Use Bi-LSTM', action='store_true')
     parser.add_argument('--gru', help='Use GRU rather than LSTM', action='store_true')
-
 
     # TRANSFORMER
     parser.add_argument('--hidden-dim', help='Transformers Hidden Unit Size', type=int, required=False, default=40)

@@ -1,9 +1,8 @@
 import os
-import pickle
 import h5py
 import numpy as np
 from src.dataset import MOSI, MOSEI, IEMOCAP
-from src.utils import save, load, load2, cmumosei_round
+from src.utils import save, load, load2
 
 def get_data(args, phase):
     dataset = args['dataset']
@@ -15,9 +14,9 @@ def get_data(args, phase):
     fsl = args['fsl'] if phase == 'train' else -1
 
     processed_path = f'./processed_datasets/{dataset}_{seq_len}_{phase}{"" if aligned else "_noalign"}.pt'
-    # if os.path.exists(processed_path) and zsl == -1 and fsl == -1:
-    #     print(f'Load processed dataset! - {phase}')
-    #     return load(processed_path)
+    if os.path.exists(processed_path) and zsl == -1 and fsl == -1:
+        print(f'Load processed dataset! - {phase}')
+        return load(processed_path)
 
     if dataset == 'mosi':
         if seq_len == 20:
@@ -34,18 +33,18 @@ def get_data(args, phase):
             data = load(data_path)
             data = data[phase]
             this_dataset = MOSI(data['id'], data['text'], data['audio'], data['vision'], data['labels'])
-    elif dataset == 'mosei_senti':
-        if seq_len == 20:
-            text_data = np.array(h5py.File(os.path.join(file_folder, f'text_{phase}.h5'), 'r')['d1'])
-            audio_data = np.array(h5py.File(os.path.join(file_folder, f'audio_{phase}.h5'), 'r')['d1'])
-            vision_data = np.array(h5py.File(os.path.join(file_folder, f'vision_{phase}.h5'), 'r')['d1'])
-            labels = np.array(h5py.File(os.path.join(file_folder, f'y_{phase}.h5'), 'r')['d1'])
-            this_dataset = MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels)
-        else:
-            data_path = os.path.join(file_folder, f'mosei_senti_data{"" if aligned else "_noalign"}.pkl')
-            data = load(data_path)
-            data = data[phase]
-            this_dataset = MOSEI(data['id'], data['text'], data['audio'], data['vision'], data['labels'])
+    # elif dataset == 'mosei_senti':
+    #     if seq_len == 20:
+    #         text_data = np.array(h5py.File(os.path.join(file_folder, f'text_{phase}.h5'), 'r')['d1'])
+    #         audio_data = np.array(h5py.File(os.path.join(file_folder, f'audio_{phase}.h5'), 'r')['d1'])
+    #         vision_data = np.array(h5py.File(os.path.join(file_folder, f'vision_{phase}.h5'), 'r')['d1'])
+    #         labels = np.array(h5py.File(os.path.join(file_folder, f'y_{phase}.h5'), 'r')['d1'])
+    #         this_dataset = MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels)
+    #     else:
+    #         data_path = os.path.join(file_folder, f'mosei_senti_data{"" if aligned else "_noalign"}.pkl')
+    #         data = load(data_path)
+    #         data = data[phase]
+    #         this_dataset = MOSEI(data['id'], data['text'], data['audio'], data['vision'], data['labels'])
     elif dataset == 'mosei_emo':
         text_data = np.array(h5py.File(os.path.join(file_folder, f'text_{phase}_emb.h5'), 'r')['d1'])
         audio_data = np.array(h5py.File(os.path.join(file_folder, f'audio_{phase}.h5'), 'r')['d1'])
@@ -53,12 +52,7 @@ def get_data(args, phase):
         labels = np.array(h5py.File(os.path.join(file_folder, f'ey_{phase}.h5'), 'r')['d1']) # (N, 6)
 
         # Class order: Anger Disgust Fear Happy Sad Surprise
-        if args['multi_level_classify']:
-            # TODO: this should be length 24
-            for i in range(labels.shape[0]):
-                labels[i] = [cmumosei_round(l) for l in labels[i]]
-        else:
-            labels = np.array(labels > 0, np.int32)
+        labels = np.array(labels > 0, np.int32)
 
         this_dataset = MOSEI(list(range(len(labels))), text_data, audio_data, vision_data, labels, zsl=zsl, fsl=fsl)
     elif dataset == 'iemocap':

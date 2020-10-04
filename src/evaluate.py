@@ -1,9 +1,6 @@
-from copy import deepcopy
 import numpy as np
 import torch
-import torch.nn.functional as F
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
-from src.utils import save
 
 def multiclass_acc(preds, truths):
     return np.sum(np.round(preds) == np.round(truths)) / float(len(truths))
@@ -142,21 +139,8 @@ def eval_iemocap(preds, truths):
     aucs = roc_auc_score(truths, preds, labels=list(range(num_emo)), average=None).tolist()
     aucs.append(np.average(aucs))
 
-    # temp1 = []
-    # temp2 = []
-    # for i, truth in enumerate(truths):
-    #     if truth[-1] == 1:
-    #         temp1.append(preds[i].tolist())
-    #         # print(preds[i])
-    #     else:
-    #         temp2.append(preds[i].tolist())
-    #         # print(preds[i])
-    # # print(temp2)
-    # print(np.mean(temp1,0))
-    # print(np.mean(temp2,0))
-
     # zsl: 0.5 0.35 0.3
-    th = [0.4, 0.65, 0.6, 0.95, 0.5]
+    th = [0.5, 0.5, 0.5, 0.5]
     for i in range(len(th)):
         pred = preds[:, i]
         pred[pred > th[i]] = 1
@@ -169,7 +153,7 @@ def eval_iemocap(preds, truths):
         pred_i = preds[:, i]
         truth_i = truths[:, i]
 
-        acc = weighted_acc(pred_i, truth_i, verbose=True)
+        # acc = weighted_acc(pred_i, truth_i, verbose=True)
         acc = accuracy_score(truth_i, pred_i)
 
         f1 = f1_score(truth_i, pred_i, average='weighted')
