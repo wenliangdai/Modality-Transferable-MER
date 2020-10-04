@@ -1,6 +1,6 @@
 # Modality-Transferable Emotion Embeddings for Low-Resource Multimodal Emotion Recognition
 
-[![](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/) [![CC BY 4.0][cc-by-shield]][cc-by]
+<img src="img/pytorch-logo-dark.png" width="10%"/> [![](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/) [![CC BY 4.0][cc-by-shield]][cc-by]
 
 
 <img align="right" src="img/HKUST.jpg" width="15%"/>
