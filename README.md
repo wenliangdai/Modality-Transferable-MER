@@ -21,4 +21,39 @@ Despite the recent achievements made in the multi-modal emotion recognition task
 
 We use the pre-processed features from the [CMU-Multimodal SDK](https://github.com/A2Zadeh/CMU-MultimodalSDK).
 
-Or you can directly download the data from http://immortal.multicomp.cs.cmu.edu/raw_datasets/processed_data/.
+Or you can directly download the data from [here](http://immortal.multicomp.cs.cmu.edu/raw_datasets/processed_data/).
+
+## Preparation for running
+1. Create a new folder named ***data*** at the root of this project
+
+2. Download Emotion Embeddings from [here](https://drive.google.com/file/d/1RXdPUv03DIA7vO_RXTfBQ4RLQ6el0MFf/view?usp=sharing), and then put it in the $data$ folder.
+
+3. Download data
+    - For a quick run
+      - Just download our saved `torch.utils.data.dataset.Dataset` datasets from [here](https://drive.google.com/file/d/17561ChjBP3psNypLMNcX7AohZqcTd4wI/view?usp=sharing), unzip it at the root of this project.
+    - For a normal run
+      - Download the data from [here](http://immortal.multicomp.cs.cmu.edu/raw_datasets/processed_data/)
+      - Check the ***data_folder_structure.txt*** file, which shows the structure about how to organize data files
+      - Put data files correspondingly
+
+4. Good to go!
+
+## Command examples
+
+Training our model on the CMU-MOSEI dataset
+
+```console
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea --data-folder=./data/cmu-mosei/seq_length_20/data --data-seq-len=20 --dataset=mosei_emo --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
+```
+
+Training our model on the IEMOCAP dataset
+
+```console
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea --data-folder=./data/iemocap/seq_length_20/data --data-seq-len=20 --dataset=iemocap --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
+```
+
+Training a early fusion lstm baseline
+
+```console
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=rnn --fusion=ef --data-folder=./data/iemocap/seq_length_20/data --data-seq-len=20 --dataset=iemocap --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
+```
