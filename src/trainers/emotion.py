@@ -132,7 +132,7 @@ class MoseiEmoTrainer(TrainerBase):
         epoch_loss = 0.0
         total_logits = None
         total_Y = None
-        for X, Y, META in tqdm(dataloader, desc='Train'):
+        for X, Y, _ in tqdm(dataloader, desc='Train'):
             X_text, X_audio, X_vision = X
             X_text = X_text.to(device=self.device)
             X_audio = X_audio.to(device=self.device)
@@ -161,7 +161,7 @@ class MoseiEmoTrainer(TrainerBase):
         epoch_loss = 0.0
         total_logits = None
         total_Y = None
-        for X, Y, META in tqdm(dataloader, desc=phase):
+        for X, Y, _ in tqdm(dataloader, desc=phase):
             X_text, X_audio, X_vision = X
             X_text = X_text.to(device=self.device)
             X_audio = X_audio.to(device=self.device)
@@ -307,7 +307,7 @@ class IemocapTrainer(TrainerBase):
         epoch_loss = 0.0
         total_logits = None
         total_Y = None
-        for X, Y, META in tqdm(dataloader, desc='Train'):
+        for X, Y, _ in tqdm(dataloader, desc='Train'):
             X_text, X_audio, X_vision = X
             X_text = X_text.to(device=self.device)
             X_audio = X_audio.to(device=self.device)
@@ -337,7 +337,7 @@ class IemocapTrainer(TrainerBase):
         epoch_loss = 0.0
         total_logits = None
         total_Y = None
-        for X, Y, META in tqdm(dataloader, desc=phase):
+        for X, Y, _ in tqdm(dataloader, desc=phase):
             X_text, X_audio, X_vision = X
             X_text = X_text.to(device=self.device)
             X_audio = X_audio.to(device=self.device)

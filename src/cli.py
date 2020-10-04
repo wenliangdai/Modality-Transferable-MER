@@ -1,7 +1,7 @@
 import argparse
 
 def get_args():
-    parser = argparse.ArgumentParser(description='Multi-modal emotion recognition')
+    parser = argparse.ArgumentParser(description='Multimodal Emotion Recognition')
 
     # Training hyper-parameters
     parser.add_argument('-bs', '--batch-size', help='Batch size', type=int, required=True)
@@ -50,7 +50,7 @@ def get_args():
     parser.add_argument('--gru', help='Use GRU rather than LSTM', action='store_true')
 
     # TRANSFORMER
-    parser.add_argument('--hidden-dim', help='Transformers Hidden Unit Size', type=int, required=False, default=40)
+    parser.add_argument('--hidden-dim', help='Transformers hidden unit size', type=int, required=False, default=40)
 
     args = vars(parser.parse_args())
     return args

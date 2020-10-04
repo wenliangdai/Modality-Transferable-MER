@@ -1,11 +1,11 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-from copy import deepcopy
-from src.utils import save
+
 
 class EmotionEmbAttnModel(nn.Module):
-    def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, emo_weight, device, bidirectional=False, modalities='tav', gru=False):
+    def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, emo_weight, device,
+                 bidirectional=False, modalities='tav', gru=False):
         super(EmotionEmbAttnModel, self).__init__()
 
         self.num_classes = num_classes
@@ -22,19 +22,6 @@ class EmotionEmbAttnModel(nn.Module):
         self.affineAudio = nn.Linear(hidden_sizes[0], hidden_sizes[1])
         self.affineVisual = nn.Linear(hidden_sizes[0], hidden_sizes[2])
 
-        # self.affineAudio = nn.Sequential(
-        #     nn.Linear(hidden_sizes[0], hidden_sizes[1]),
-        #     nn.ReLU(),
-        #     nn.Dropout(dropout),
-        #     nn.Linear(hidden_sizes[1], hidden_sizes[1])
-        # )
-        # self.affineVisual = nn.Sequential(
-        #     nn.Linear(hidden_sizes[0], hidden_sizes[2]),
-        #     nn.ReLU(),
-        #     nn.Dropout(dropout),
-        #     nn.Linear(hidden_sizes[2], hidden_sizes[2])
-        # )
-
         RnnModel = nn.GRU if gru else nn.LSTM
 
         self.RNNs = nn.ModuleList([
@@ -48,30 +35,8 @@ class EmotionEmbAttnModel(nn.Module):
             ) for i, input_size in enumerate(input_sizes)
         ])
 
-        # self.linear_fusion_ta = nn.Linear(hidden_sizes[0] + hidden_sizes[1], hidden_sizes[2])
-        # self.linear_fusion_tv = nn.Linear(hidden_sizes[0] + hidden_sizes[2], hidden_sizes[1])
-        # self.linear_fusion_av = nn.Linear(hidden_sizes[2] + hidden_sizes[1], hidden_sizes[0])
-
         self.modality_weights = nn.Linear(len(modalities), 1, bias=False)
         self.modality_weights.weight = nn.Parameter(F.softmax(torch.ones(len(modalities)), dim=0))
-
-        # linearInSize = hidden_size
-        # if bidirectional:
-        #     linearInSize = linearInSize * 2
-
-        # self.out = nn.Sequential(
-        #     nn.Linear(linearInSize, int(linearInSize / 3)),
-        #     nn.ReLU(),
-        #     nn.Dropout(dropout),
-        #     nn.Linear(int(linearInSize / 3), num_classes)
-        #     # nn.Sigmoid()
-        # )
-
-        # self.out = nn.Sequential(
-        #     nn.Linear(emo_weight.size(0), num_classes),
-        #     nn.Dropout(dropout),
-        #     nn.Sigmoid()
-        # )
 
     def attention(self, attender, attendee, only_weight=True):
         # attender: (batch, hid_dim)
@@ -100,7 +65,6 @@ class EmotionEmbAttnModel(nn.Module):
             output_text = output_text[:, -1, :]
             text_emo_vecs = text_emo_vecs_origin.unsqueeze(0).repeat(batch_size, 1, 1)
             text_attn_weights = self.attention(output_text, text_emo_vecs)
-            # logits = text_attn_weights if logits is None else logits + text_attn_weights
             scores.append(text_attn_weights.unsqueeze(0))
 
         if 'a' in self.modalities:
@@ -112,7 +76,6 @@ class EmotionEmbAttnModel(nn.Module):
             audio_emo_vecs = self.affineAudio(text_emo_vecs_origin)
             audio_emo_vecs = audio_emo_vecs.unsqueeze(0).repeat(batch_size, 1, 1)
             audio_attn_weights = self.attention(output_audio, audio_emo_vecs)
-            # logits = audio_attn_weights if logits is None else logits + audio_attn_weights
             scores.append(audio_attn_weights.unsqueeze(0))
 
         if 'v' in self.modalities:
@@ -124,9 +87,7 @@ class EmotionEmbAttnModel(nn.Module):
             visual_emo_vecs = self.affineVisual(text_emo_vecs_origin)
             visual_emo_vecs = visual_emo_vecs.unsqueeze(0).repeat(batch_size, 1, 1)
             visual_attn_weights = self.attention(output_visual, visual_emo_vecs)
-            # logits = visual_attn_weights if logits is None else logits + visual_attn_weights
             scores.append(visual_attn_weights.unsqueeze(0))
-
 
         if len(self.modalities) == 1:
             return scores[0].squeeze(0)

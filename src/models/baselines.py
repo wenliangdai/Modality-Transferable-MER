@@ -1,10 +1,10 @@
 import torch
 from torch import nn
-# import torch.nn.functional as F
 
 
 class EF_RNN(nn.Module):
-    def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout, bidirectional=False, gru=False):
+    def __init__(self, num_classes, input_sizes, hidden_size, hidden_sizes, num_layers, dropout,
+                 bidirectional=False, gru=False):
         super(EF_RNN, self).__init__()
 
         self.num_classes = num_classes
@@ -23,13 +23,6 @@ class EF_RNN(nn.Module):
         linear_in_size = hidden_size
         if bidirectional:
             linear_in_size = linear_in_size * 2
-
-        # self.out = nn.Sequential(
-        #     nn.Linear(linear_in_size, linear_in_size),
-        #     nn.ReLU(),
-        #     nn.Dropout(0.1),
-        #     nn.Linear(linear_in_size, num_classes)
-        # )
 
         self.out = nn.Linear(linear_in_size, num_classes)
 
@@ -69,13 +62,6 @@ class LF_RNN(nn.Module):
         linear_in_size = sum(hidden_sizes)
         if bidirectional:
             linear_in_size = linear_in_size * 2
-
-        # self.out = nn.Sequential(
-        #     nn.Linear(linear_in_size, int(linear_in_size / 3)),
-        #     nn.ReLU(),
-        #     nn.Dropout(0.1),
-        #     nn.Linear(int(linear_in_size / 3), num_classes)
-        # )
 
         self.out = nn.Linear(linear_in_size, num_classes)
 
@@ -185,15 +171,6 @@ class TextSelectiveRNN(nn.Module):
 
         self.attention = Attention(hidden_sizes[0], hidden_sizes[0])
 
-    # def attention(self, attender, attendee):
-    #     # attender (batch, hid_dim)
-    #     # attendee (batch, seq_len, hid_dim)
-    #     attender = attender.unsqueeze(-1)
-    #     attn_weights = torch.bmm(attendee, attender) # (batch, seq_len, 1)
-    #     attn_weights = F.softmax(attn_weights, dim=1)
-    #     res = torch.sum(attendee * attn_weights, dim=1) # (batch, hid_dim)
-    #     return res
-
     def forward(self, X_text, X_audio, X_vision):
         # (batch, seq_len, num_directions * hidden_size)
         output_text, _ = self.RNNs[0](X_text)
@@ -202,8 +179,6 @@ class TextSelectiveRNN(nn.Module):
 
         # (batch, num_directions * hidden_size)
         output_text = output_text[:, -1, :]
-        # output_audio = output_audio[:, -1, :]
-        # output_vision = output_vision[:, -1, :]
 
         attn_audio = self.attention(output_text, output_audio)
         attn_vision = self.attention(output_text, output_vision)

@@ -10,7 +10,7 @@ from src.trainers.emotion import MoseiEmoTrainer, IemocapTrainer
 from src.models import baselines # EF_LSTM, LF_LSTM, EF_LF_LSTM
 from src.models.transformers import EF_Transformer
 from src.models.mult import MULTModel
-from src.models.temp import EmotionEmbAttnModel
+from src.models.eea import EmotionEmbAttnModel
 from src.config import NUM_CLASSES, MULT_PARAMS, EMOTIONS
 
 
