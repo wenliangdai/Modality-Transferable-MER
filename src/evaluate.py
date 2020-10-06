@@ -128,7 +128,6 @@ def eval_iemocap(preds, truths):
     truths: (bs, num_emotions)
     '''
 
-    total = preds.size(0)
     num_emo = preds.size(1)
 
     preds = preds.cpu().detach()
@@ -140,7 +139,7 @@ def eval_iemocap(preds, truths):
     aucs.append(np.average(aucs))
 
     # zsl: 0.5 0.35 0.3
-    th = [0.5, 0.5, 0.5, 0.5]
+    th = [0.5] * num_emo
     for i in range(len(th)):
         pred = preds[:, i]
         pred[pred > th[i]] = 1
