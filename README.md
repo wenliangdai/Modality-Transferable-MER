@@ -10,8 +10,9 @@
 
 Paper accepted at the [AACL-IJCNLP 2020](http://www.aacl2020.org/):
 
-[Modality-Transferable Emotion Embeddings for Low-Resource Multimodal Emotion Recognition](https://arxiv.org/abs/2009.09629) 
-(Wenliang Dai, Zihan Liu, Tiezheng Yu, Pascale Fung)
+**Modality-Transferable Emotion Embeddings for Low-Resource Multimodal Emotion Recognition**, by **Wenliang Dai**, Zihan Liu, Tiezheng Yu, Pascale Fung.
+
+[[ArXiv](https://arxiv.org/abs/2009.09629)][[Semantic Scholar](https://www.semanticscholar.org/paper/Modality-Transferable-Emotion-Embeddings-for-Dai-Liu/22201ea212a41fa5b1c24ba3e1f596d73fc13584)]
 
 If your work is inspired by our paper, or you use any code snippets in this repo, please cite this paper, the BibTex is shown below:
 
