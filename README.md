@@ -36,7 +36,7 @@ We use the pre-processed features from the [CMU-Multimodal SDK](https://github.c
 Or you can directly download the data from [here](http://immortal.multicomp.cs.cmu.edu/raw_datasets/processed_data/).
 
 ## Preparation for running
-1. Create a new folder named ***data*** at the root of this project
+1. Create a new folder named **data** at the root of this project
 
 2. Download Emotion Embeddings from [here](https://drive.google.com/file/d/1RXdPUv03DIA7vO_RXTfBQ4RLQ6el0MFf/view?usp=sharing), and then put it in the $data$ folder.
 
@@ -45,7 +45,7 @@ Or you can directly download the data from [here](http://immortal.multicomp.cs.c
       - Just download our saved `torch.utils.data.dataset.Dataset` datasets from [here](https://drive.google.com/file/d/17561ChjBP3psNypLMNcX7AohZqcTd4wI/view?usp=sharing), unzip it at the root of this project.
     - For a normal run
       - Download the data from [here](http://immortal.multicomp.cs.cmu.edu/raw_datasets/processed_data/)
-      - Check the ***data_folder_structure.txt*** file, which shows the structure about how to organize data files
+      - Check the **data_folder_structure.txt** file, which shows the structure about how to organize data files
       - Put data files correspondingly
 
 4. Good to go!
@@ -131,26 +131,59 @@ optional arguments:
                         Transformers hidden unit size
 ```
 
-Training our model on the CMU-MOSEI dataset
+## Run the code
+
+`main.py` is the entry file of the whole project, use corresponding CLIs for different purposes.
+
+### Training
+
+Training the model on the CMU-MOSEI dataset
 
 ```console
-python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea --data-folder=./data/cmu-mosei/seq_length_20/data --data-seq-len=20 --dataset=mosei_emo --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea -bi --hidden-sizes 300 200 100 --num-layers=2 --dropout=0.15 --data-folder=./data/cmu-mosei/ --data-seq-len=20 --dataset=mosei_emo --aligned --loss=ce --clip=1.0 --early-stop=8 -mod=tav --patience=5   
 ```
 
-Training our model on the IEMOCAP dataset
+Training the model on the IEMOCAP dataset
 
 ```console
-python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea --data-folder=./data/iemocap/seq_length_20/data --data-seq-len=20 --dataset=iemocap --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea --data-folder=./data/iemocap/ --data-seq-len=50 --dataset=iemocap --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
 ```
 
 Training a early fusion lstm baseline
 
 ```console
-python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=rnn --fusion=ef --data-folder=./data/iemocap/seq_length_20/data --data-seq-len=20 --dataset=iemocap --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=rnn --fusion=ef --data-folder=./data/iemocap/ --data-seq-len=50 --dataset=iemocap --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
 ```
+
+### Validating and testing
+
+If you only want to do a validation or testing on a trained model, you can add a `--valid` or `--test` flag to the original command, and also include `--ckpt=[PathToSavedCheckpoint]` to indicate the path of the trained model.
+
+### Zero-shot learning (ZSL)
+
+Add a `--zsl=[EmotionIndex]` cli to the original training command, in which the EmotionIndex is the index of the emotion category that you want to do zero-shot on. As mentioned in the paper, due to different strategies for CMU-MOSEI and IEMOCAP datasets, `--zsl=[EmotionIndex]` has slightly different meaning for them, we list the correct cli here:
+
+For CMU-MOSEI (ZSL emotion data will be removed from the training data),
+
+* `--zsl=0`, do ZSL on **anger**
+* `--zsl=1`, do ZSL on **disgust**
+* `--zsl=2`, do ZSL on **fear**
+* `--zsl=3`, do ZSL on **happy**
+* `--zsl=4`, do ZSL on **sad**
+* `--zsl=5`, do ZSL on **surprise**
+
+For IEMOCAP (the training data remains unchanged, as ZSL emotion is from extra low-resource data),
+* `--zsl=1`, do ZSL on **excited**
+* `--zsl=4`, do ZSL on **surprised**
+* `--zsl=5`, do ZSL on **frustrated**
+
+
+### Few-shot learning (FSL)
+
+For few-shot learning, the logic is similar to ZSL, just use `--fsl=[EmotionIndex]`
 
 ## Requirements
 
 1. Python 3.6 +
 2. PyTorch 1.4 +
-3. GeForce GTX 1080Ti GPU (or more advanced)
+3. Nvidia GTX 1080Ti GPU (or more advanced)
