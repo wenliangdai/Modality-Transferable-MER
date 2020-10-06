@@ -1,77 +1,36 @@
-├── cmu-mosei
-│   ├── readme.MD
-│   ├── seq_length_20
-│   │   ├── data
-│   │   │   ├── audio_test.h5
-│   │   │   ├── audio_train.h5
-│   │   │   ├── audio_valid.h5
-│   │   │   ├── ey_test.h5
-│   │   │   ├── ey_train.h5
-│   │   │   ├── ey_valid.h5
-│   │   │   ├── text_test_emb.h5
-│   │   │   ├── text_train_emb.h5
-│   │   │   ├── text_valid_emb.h5
-│   │   │   ├── video_test.h5
-│   │   │   ├── video_train.h5
-│   │   │   ├── video_valid.h5
-│   │   │   ├── y_test.h5
-│   │   │   ├── y_train.h5
-│   │   │   └── y_valid.h5
-│   │   └── labels
-│   │       ├── mosi2uni_Test.csv
-│   │       ├── mosi2uni_Test_labels_2class.csv
-│   │       ├── mosi2uni_Test_labels_5class.csv
-│   │       ├── mosi2uni_Test_labels_7class.csv
-│   │       ├── mosi2uni_Test_labels_angry.csv
-│   │       ├── mosi2uni_Test_labels_disgust.csv
-│   │       ├── mosi2uni_Test_labels_fear.csv
-│   │       ├── mosi2uni_Test_labels_happy.csv
-│   │       ├── mosi2uni_Test_labels_sad.csv
-│   │       ├── mosi2uni_Test_labels_surprise.csv
-│   │       ├── mosi2uni_Train.csv
-│   │       ├── mosi2uni_Train_labels_2class.csv
-│   │       ├── mosi2uni_Train_labels_5class.csv
-│   │       ├── mosi2uni_Train_labels_7class.csv
-│   │       ├── mosi2uni_Train_labels_angry.csv
-│   │       ├── mosi2uni_Train_labels_disgust.csv
-│   │       ├── mosi2uni_Train_labels_fear.csv
-│   │       ├── mosi2uni_Train_labels_happy.csv
-│   │       ├── mosi2uni_Train_labels_sad.csv
-│   │       └── mosi2uni_Train_labels_surprise.csv
-│   └── seq_length_50
-│       ├── mosei_senti_data.pkl
-│       └── mosei_senti_data_noalign.pkl
-├── cmu-mosi
-│   ├── fs_mask.pkl.txt
-│   ├── readme.MD
-│   ├── seq_length_20
-│   │   ├── X_test.h5
-│   │   ├── X_train.h5
-│   │   ├── X_valid.h5
-│   │   ├── y_test.h5
-│   │   ├── y_train.h5
-│   │   └── y_valid.h5
-│   └── seq_length_50
-│       ├── mosi_data.pkl
-│       └── mosi_data_noalign.pkl
 ├── glove.emotions.840B.300d.pt
+├── cmu-mosei
+│   ├── audio_test.h5
+│   ├── audio_train.h5
+│   ├── audio_valid.h5
+│   ├── ey_test.h5
+│   ├── ey_train.h5
+│   ├── ey_valid.h5
+│   ├── mosei_senti_data.pkl
+│   ├── mosei_senti_data_noalign.pkl
+│   ├── readme.MD
+│   ├── text_test_emb.h5
+│   ├── text_train_emb.h5
+│   ├── text_valid_emb.h5
+│   ├── video_test.h5
+│   ├── video_train.h5
+│   ├── video_valid.h5
+│   ├── y_test.h5
+│   ├── y_train.h5
+│   └── y_valid.h5
 └── iemocap
     ├── README.md
-    ├── seq_length_20
-    │   └── data
-    │       ├── covarep_test.p
-    │       ├── covarep_train.p
-    │       ├── covarep_valid.p
-    │       ├── facet_test.p
-    │       ├── facet_train.p
-    │       ├── facet_valid.p
-    │       ├── text_test.p
-    │       ├── text_train.p
-    │       ├── text_valid.p
-    │       ├── y_test.p
-    │       ├── y_train.p
-    │       └── y_valid.p
-    └── seq_length_50
-        ├── README.md
-        ├── iemocap_data.pkl
-        └── iemocap_data_noalign.pkl
+    ├── covarep_test.p
+    ├── covarep_train.p
+    ├── covarep_valid.p
+    ├── facet_test.p
+    ├── facet_train.p
+    ├── facet_valid.p
+    ├── iemocap_data.pkl
+    ├── iemocap_data_noalign.pkl
+    ├── text_test.p
+    ├── text_train.p
+    ├── text_valid.p
+    ├── y_test.p
+    ├── y_train.p
+    └── y_valid.p
