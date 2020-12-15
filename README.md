@@ -141,19 +141,19 @@ optional arguments:
 Training the model on the CMU-MOSEI dataset
 
 ```console
-python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea -bi --hidden-sizes 300 200 100 --num-layers=2 --dropout=0.15 --data-folder=./data/cmu-mosei/ --data-seq-len=20 --dataset=mosei_emo --aligned --loss=ce --clip=1.0 --early-stop=8 -mod=tav --patience=5   
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea -bi --hidden-sizes 300 200 100 --num-layers=2 --dropout=0.15 --data-folder=./data/cmu-mosei/ --data-seq-len=20 --dataset=mosei_emo --aligned --loss=bce --clip=1.0 --early-stop=8 -mod=tav --patience=5   
 ```
 
 Training the model on the IEMOCAP dataset
 
 ```console
-python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea --data-folder=./data/iemocap/ --data-seq-len=50 --dataset=iemocap --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=eea --data-folder=./data/iemocap/ --data-seq-len=50 --dataset=iemocap --loss=bce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
 ```
 
 Training a early fusion lstm baseline
 
 ```console
-python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=rnn --fusion=ef --data-folder=./data/iemocap/ --data-seq-len=50 --dataset=iemocap --loss=ce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
+python main.py --cuda=0 -bs=64 -lr=1e-3 -ep=100 --model=rnn --fusion=ef --data-folder=./data/iemocap/ --data-seq-len=50 --dataset=iemocap --loss=bce --clip=1.0 --early-stop=8 --hidden-sizes 300 200 100 -mod=tav --patience=5 --aligned -bi --num-layers=2 --dropout=0.15
 ```
 
 ### Validating and testing
